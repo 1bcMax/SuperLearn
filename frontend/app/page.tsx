@@ -4,45 +4,44 @@ import { useState } from "react"
 import { ErrorBoundary } from "react-error-boundary"
 import { LearningFlow } from "@/components/learning-flow"
 import { AIAgentChat } from "@/components/ai-agent-chat"
-import { usePrivy, useWallets } from '@privy-io/react-auth'
+import { DynamicWidget, useDynamicContext } from "@dynamic-labs/sdk-react-core"
 
 type LearningStep = "registration" | "wallet" | "ai-intro" | "quiz" | "nft-reward"
 
-// Privy Debug Widget
-const PrivyDebugWidget = () => {
-  const { ready, authenticated, user, login, logout } = usePrivy()
-  const { wallets } = useWallets()
-  const primaryWallet = wallets.length > 0 ? wallets[0] : null
+// Dynamic Debug Widget
+const DynamicDebugWidget = () => {
+  const { sdkHasLoaded, primaryWallet, user, setShowAuthFlow, handleLogOut } = useDynamicContext()
 
-  if (!ready) {
+  if (!sdkHasLoaded) {
     return (
       <div className="fixed top-4 right-4 z-50 bg-yellow-100 p-2 rounded text-xs border">
-        🔄 Loading Privy...
+        🔄 Loading ...
       </div>
     )
   }
 
   return (
     <div className="fixed top-4 right-4 z-50 bg-white p-4 rounded-lg shadow-lg border max-w-sm">
-      <h3 className="font-bold text-sm mb-2">🐛 Privy Debug</h3>
+      <h3 className="font-bold text-sm mb-2">🐛 Dynamic Debug</h3>
       
-      {!authenticated ? (
+      {!user ? (
         <button 
-          onClick={login}
+          onClick={() => setShowAuthFlow(true)}
           className="w-full px-3 py-2 bg-blue-500 text-white rounded text-sm hover:bg-blue-600"
         >
-          Connect with Privy
+          Connect with Dynamic
         </button>
       ) : (
         <div className="space-y-2">
+          <DynamicWidget />
           <button 
-            onClick={logout}
+            onClick={handleLogOut}
             className="w-full px-3 py-2 bg-red-500 text-white rounded text-sm hover:bg-red-600"
           >
             Disconnect
           </button>
           <div className="text-xs space-y-1">
-            <p>✅ User: {user?.email?.address || user?.phone?.number || 'Connected'}</p>
+            <p>✅ User: {user?.email && 'Connected'}</p>
             {primaryWallet && (
               <>
                 <p>💰 Wallet: {primaryWallet.address?.slice(0, 8)}...</p>
@@ -94,7 +93,7 @@ export default function HomePage() {
 
   return (
     <ErrorBoundary FallbackComponent={ErrorFallback}>
-      <PrivyDebugWidget />
+      <DynamicDebugWidget />
       
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
         <div className="max-w-6xl mx-auto">

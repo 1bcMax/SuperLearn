@@ -7,64 +7,213 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { CheckCircle, Wallet, Brain, Trophy, ArrowRight, Loader2, ArrowDown, Zap, Target, Award } from "lucide-react"
-import { usePrivy, useWallets } from '@privy-io/react-auth'
+import { CheckCircle, Wallet, Brain, Trophy, ArrowRight, Loader2, ArrowDown, Target, Award } from "lucide-react"
+import { useDynamicContext, useDynamicWaas, useConnectWithOtp, useIsLoggedIn, useUserUpdateRequest, useDynamicModals, DynamicMultiWalletPromptsWidget } from '@dynamic-labs/sdk-react-core'
 
-// Privy authentication hook
-const usePrivyAuth = () => {
-  const { ready, authenticated, user, login, logout } = usePrivy()
-  const { wallets } = useWallets()
+// Dynamic authentication hook
+const useDynamicAuth = () => {
+  const { user, primaryWallet } = useDynamicContext()
+  const isAuthenticated = useIsLoggedIn()
+  const { createWalletAccount } = useDynamicWaas()
+  const { connectWithEmail, verifyOneTimePassword } = useConnectWithOtp()
   
-  const primaryWallet = wallets.length > 0 ? wallets[0] : null
-  
-  console.log("[Privy] Auth state:", {
-    ready,
-    authenticated,
-    user: user?.email?.address,
-    walletCount: wallets.length
-    })
+  console.log("[Dynamic] Auth state:", {
+    isAuthenticated,
+    user: user?.email,
+    wallet: primaryWallet?.address
+  })
     
-    return {
-      ready,
-      authenticated,
-      user,
-      primaryWallet,
-      login,
-      logout
-    }
+  return {
+    ready: true, // Dynamic is always ready
+    authenticated: isAuthenticated,
+    user,
+    primaryWallet,
+    connectWithEmail,
+    verifyOneTimePassword,
+    createWalletAccount
+  }
 }
 
-// Privy Login Button Component
-const PrivyLoginButton = () => {
-  const { ready, authenticated, login } = usePrivy()
-  
-  if (!ready) {
+// Headless Email Authentication Component
+const HeadlessEmailAuth = () => {
+  const { connectWithEmail, verifyOneTimePassword } = useDynamicAuth()
+  const isAuthenticated = useIsLoggedIn()
+  const { updateUser } = useUserUpdateRequest()
+  const [emailInput, setEmailInput] = useState("")
+  const [otpInput, setOtpInput] = useState("")
+  const [nameInput, setNameInput] = useState("")
+  const [authStep, setAuthStep] = useState<'email' | 'otp' | 'name'>('email')
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState("")
+
+  const handleEmailSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!emailInput) return
+    
+    setIsLoading(true)
+    setError("")
+    try {
+      await connectWithEmail(emailInput)
+      setAuthStep('otp')
+    } catch (error) {
+      setError("Failed to send OTP. Please try again.")
+      console.error("Email auth error:", error)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleOtpSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!otpInput) return
+    
+    setIsLoading(true)
+    setError("")
+    try {
+      await verifyOneTimePassword(otpInput)
+      // After authentication, go to name step
+      setAuthStep('name')
+    } catch (error) {
+      setError("Invalid OTP. Please try again.")
+      console.error("OTP verification error:", error)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleNameSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!nameInput) return
+    
+    setIsLoading(true)
+    setError("")
+    try {
+      await updateUser({ alias: nameInput })
+      // Name update complete, the useEffect will handle progression
+    } catch (error) {
+      setError("Failed to update name. Please try again.")
+      console.error("Name update error:", error)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  if (isAuthenticated && authStep !== 'name') {
     return (
-      <Button disabled className="w-full">
-        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-        Loading Privy...
-      </Button>
+      <div className="text-center space-y-4">
+        <div className="text-6xl">🎉</div>
+        <p className="text-green-700 font-medium">✨ You're authenticated! ✨</p>
+      </div>
     )
   }
-  
-  if (authenticated) {
-    return (
-      <Button disabled className="w-full bg-green-500">
-        <CheckCircle className="w-4 h-4 mr-2" />
-        Wallet Connected
-      </Button>
-    )
-  }
-  
+
   return (
-    <Button onClick={login} className="w-full">
-      <Wallet className="w-4 h-4 mr-2" />
-      Connect Wallet with Privy
-    </Button>
+    <div className="space-y-4">
+      {authStep === 'email' ? (
+        <form onSubmit={handleEmailSubmit} className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="auth-email" className="text-purple-700 font-medium">
+              Email Address 📧
+            </Label>
+            <Input
+              id="auth-email"
+              type="email"
+              value={emailInput}
+              onChange={(e) => setEmailInput(e.target.value)}
+              placeholder="Enter your email"
+              className="border-2 border-pink-200 focus:border-purple-400 bg-white/80"
+              required
+            />
+          </div>
+          {error && <p className="text-red-600 text-sm">{error}</p>}
+          <Button
+            type="submit"
+            disabled={!emailInput || isLoading}
+            className="w-full bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600 text-white shadow-lg transform hover:scale-105 transition-all"
+          >
+            {isLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+            🚀 Send Magic Link 🚀
+          </Button>
+        </form>
+      ) : authStep === 'otp' ? (
+        <form onSubmit={handleOtpSubmit} className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="auth-otp" className="text-purple-700 font-medium">
+              Enter Code 🔐
+            </Label>
+            <Input
+              id="auth-otp"
+              type="text"
+              value={otpInput}
+              onChange={(e) => setOtpInput(e.target.value)}
+              placeholder="Enter 6-digit code"
+              className="border-2 border-pink-200 focus:border-purple-400 bg-white/80"
+              maxLength={6}
+              required
+            />
+          </div>
+          <p className="text-sm text-purple-600">
+            We sent a code to {emailInput}. Check your email! 📧
+          </p>
+          {error && <p className="text-red-600 text-sm">{error}</p>}
+          <div className="space-y-2">
+            <Button
+              type="submit"
+              disabled={!otpInput || isLoading}
+              className="w-full bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white shadow-lg transform hover:scale-105 transition-all"
+            >
+              {isLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+              ✨ Verify Code ✨
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                setAuthStep('email')
+                setOtpInput("")
+                setError("")
+              }}
+              className="w-full"
+            >
+              ← Back to Email
+            </Button>
+          </div>
+        </form>
+      ) : (
+        <form onSubmit={handleNameSubmit} className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="auth-name" className="text-purple-700 font-medium">
+              Your Name 🦄
+            </Label>
+            <Input
+              id="auth-name"
+              type="text"
+              value={nameInput}
+              onChange={(e) => setNameInput(e.target.value)}
+              placeholder="Enter your first name"
+              className="border-2 border-pink-200 focus:border-purple-400 bg-white/80"
+              required
+            />
+          </div>
+          <p className="text-sm text-purple-600">
+            Almost done! What should we call you? 🌟
+          </p>
+          {error && <p className="text-red-600 text-sm">{error}</p>}
+          <Button
+            type="submit"
+            disabled={!nameInput || isLoading}
+            className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white shadow-lg transform hover:scale-105 transition-all"
+          >
+            {isLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+            🚀 Complete Registration! 🚀
+          </Button>
+        </form>
+      )}
+    </div>
   )
 }
 
-type LearningStep = "registration" | "wallet" | "ai-intro" | "quiz" | "nft-reward"
+type LearningStep = "registration" | "wallet" | "link-wallet" | "ai-intro" | "quiz" | "nft-reward"
 
 interface StepData {
   id: LearningStep
@@ -116,12 +265,16 @@ export function LearningFlow({
 }: LearningFlowProps) {
   const [isLoading, setIsLoading] = useState(false)
   const [walletAddress, setWalletAddress] = useState("")
-  const [transactionHash, setTransactionHash] = useState("")
+
   const [walletCreating, setWalletCreating] = useState(false)
   const [activeModal, setActiveModal] = useState<string | null>(null)
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null)
 
-  const { ready, authenticated, user, primaryWallet, login } = usePrivyAuth()
+  const { sdkHasLoaded, user, primaryWallet } = useDynamicContext()
+  const authenticated = useIsLoggedIn()
+
+  const { createWalletAccount } = useDynamicWaas()
+  const { setShowLinkNewWalletModal } = useDynamicModals()
   
   // Quiz questions data
   const quizQuestions = [
@@ -162,13 +315,13 @@ export function LearningFlow({
   
   // Debug the context
   useEffect(() => {
-    console.log("[SuperLearn] Privy auth state:", {
-      ready,
+    console.log("[SuperLearn] Dynamic auth state:", {
+      sdkHasLoaded,
       authenticated,
-      user: user?.email?.address,
+      user: user?.email,
       wallet: primaryWallet?.address
     })
-  }, [ready, authenticated, user, primaryWallet])
+  }, [sdkHasLoaded, authenticated, user, primaryWallet])
 
   const steps: StepData[] = [
     {
@@ -181,9 +334,16 @@ export function LearningFlow({
     {
       id: "wallet",
       title: "Create Wallet",
-      description: "Privy embedded wallet",
+      description: "Dynamic embedded wallet",
       icon: Wallet,
       status: currentStep === "wallet" ? "active" : completedSteps.has("wallet") ? "completed" : "pending",
+    },
+    {
+      id: "link-wallet",
+      title: "Link Wallet",
+      description: "Connect external wallet",
+      icon: Wallet,
+      status: currentStep === "link-wallet" ? "active" : completedSteps.has("link-wallet") ? "completed" : "pending",
     },
     {
       id: "ai-intro",
@@ -209,49 +369,52 @@ export function LearningFlow({
   ]
 
   const stepProgress = {
-    registration: 20,
-    wallet: 40,
-    "ai-intro": 60,
-    quiz: 80,
+    registration: 16,
+    wallet: 33,
+    "link-wallet": 50,
+    "ai-intro": 66,
+    quiz: 83,
     "nft-reward": 100,
   }
 
+  // Handle authentication completion - progress from registration to wallet step
   useEffect(() => {
-    if (authenticated && primaryWallet && currentStep === "wallet") {
+    if (authenticated && user?.alias && currentStep === "registration") {
+      completeStep("registration")
+      setCurrentStep("wallet")
+      setActiveModal(null) // Close the registration modal
+    }
+  }, [authenticated, user?.alias, currentStep])
+
+  // Handle wallet creation completion - progress from wallet to link-wallet step
+  useEffect(() => {
+    if (authenticated && primaryWallet && currentStep === "wallet" && walletCreating) {
       setWalletAddress(primaryWallet.address)
       setWalletCreating(false)
       completeStep("wallet")
       setTimeout(() => {
-        setCurrentStep("ai-intro")
+        setCurrentStep("link-wallet")
       }, 1000)
     }
-  }, [authenticated, primaryWallet, currentStep])
+  }, [authenticated, primaryWallet, currentStep, walletCreating])
 
   const completeStep = (step: LearningStep) => {
     setCompletedSteps(new Set([...completedSteps, step]))
   }
 
-  const handleRegistration = async () => {
-    if (!email || !name) return
-
-    console.log("[SuperLearn] Starting registration with:", { name, email })
-    setIsLoading(true)
-    
-    // Simulate registration process
-    await new Promise((resolve) => setTimeout(resolve, 1500))
-    
-    console.log("[SuperLearn] Registration completed, proceeding to wallet creation")
-    completeStep("registration")
-    setCurrentStep("wallet")
-    setIsLoading(false)
-    setActiveModal(null)
+  const handleLinkWallet = () => {
+    console.log("[SuperLearn] Link wallet button clicked")
+    setShowLinkNewWalletModal(true)
+    // Complete the step immediately since the modal handles the linking
+    completeStep("link-wallet")
+    setTimeout(() => {
+      setCurrentStep("ai-intro")
+    }, 500)
   }
 
-  const handleWalletCreation = () => {
-    console.log("[SuperLearn] Wallet creation button clicked")
-    setWalletCreating(true)
-    login()
-  }
+
+
+
 
   const handleAIIntro = () => {
     // Switch to AI chat tab and mark step as complete
@@ -445,35 +608,10 @@ export function LearningFlow({
                 <ArrowRight className="w-5 h-5 text-pink-500" />🌟 Quick Start Registration 🌟
               </DialogTitle>
               <DialogDescription className="text-purple-600">
-                Enter your details to create your magical learning profile and get started!
+                Enter your email to get started with your magical crypto learning journey!
               </DialogDescription>
             </DialogHeader>
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="name" className="text-purple-700 font-medium">
-                  Your Name 🦄
-                </Label>
-                <Input
-                  id="name"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="Enter your name"
-                  className="border-2 border-pink-200 focus:border-purple-400 bg-white/80"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="email" className="text-purple-700 font-medium">
-                  Email Address 📧
-                </Label>
-                <Input
-                  id="email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="Enter your email"
-                  className="border-2 border-pink-200 focus:border-purple-400 bg-white/80"
-                />
-              </div>
+            <div className="space-y-6">
               <div className="bg-gradient-to-r from-purple-100 to-pink-100 p-4 rounded-lg border-2 border-purple-200">
                 <h4 className="font-semibold text-purple-800 mb-2">🎯 What you'll learn:</h4>
                 <ul className="text-sm space-y-1 text-purple-700 text-left">
@@ -483,13 +621,8 @@ export function LearningFlow({
                   <li>🏆 Earn an NFT certificate</li>
                 </ul>
               </div>
-              <Button
-                onClick={handleRegistration}
-                disabled={!email || !name || isLoading}
-                className="w-full bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600 text-white shadow-lg transform hover:scale-105 transition-all"
-              >
-                {isLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}🚀 Start My Magical Journey! 🚀
-              </Button>
+              
+              <HeadlessEmailAuth />
             </div>
           </DialogContent>
         </Dialog>
@@ -501,7 +634,7 @@ export function LearningFlow({
                 <Wallet className="w-5 h-5 text-cyan-500" />💎 Create Your Crypto Wallet 💎
               </DialogTitle>
               <DialogDescription className="text-blue-600">
-                We'll create a secure magical wallet for you using Privy's technology! ✨
+                We'll create a secure magical wallet for you using Dynamic's technology! ✨
               </DialogDescription>
             </DialogHeader>
             <div className="text-center space-y-6">
@@ -509,13 +642,25 @@ export function LearningFlow({
                 <Wallet className="w-10 h-10 text-white" />
               </div>
 
-              {!authenticated && !walletCreating ? (
+              {!primaryWallet && !walletCreating ? (
                 <div className="space-y-4">
                   <p className="text-blue-700">
-                    🌟 Your wallet will be created automatically and secured with your email. No complicated stuff to
-                    remember! 🌟
-                  </p>
-                  <PrivyLoginButton />
+                    🌟 Create your secure embedded wallet! No seed phrases to remember, secured with your email. 🌟
+                  </p>  
+                  <Button
+                    onClick={async () => {
+                      setWalletCreating(true)
+                      try {
+                        await createWalletAccount(["EVM"])
+                      } catch (error) {
+                        console.error("Wallet creation error:", error)
+                        setWalletCreating(false)
+                      }
+                    }}
+                    className="w-full bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white shadow-lg transform hover:scale-105 transition-all"
+                  >
+                    ✨ Create My Magical Wallet ✨
+                  </Button>
                 </div>
               ) : walletCreating ? (
                 <div className="space-y-4">
@@ -561,7 +706,9 @@ export function LearningFlow({
               </div>
 
               <div className="space-y-4">
-                <h3 className="font-semibold text-lg text-purple-800">Time to Learn with AI! 🤖✨</h3>
+                <h3 className="font-semibold text-lg text-purple-800">
+                  Hi {user?.alias || 'there'}! Time to Learn with AI! 🤖✨
+                </h3>
                 <div className="text-left space-y-3 bg-gradient-to-r from-purple-100 to-pink-100 p-4 rounded-lg border-2 border-purple-200">
                   <p className="text-sm font-medium text-purple-800">
                     🌟 <strong>You'll be taken to the AI chat where you can:</strong> 🌟
@@ -729,6 +876,62 @@ export function LearningFlow({
             </div>
           </DialogContent>
         </Dialog>
+
+        <Dialog open={activeModal === "link-wallet"} onOpenChange={() => setActiveModal(null)}>
+          <DialogContent className="bg-gradient-to-br from-indigo-50 to-purple-50 border-2 border-indigo-200">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2 text-indigo-800">
+                <Wallet className="w-5 h-5 text-purple-500" />🔗 Link External Wallet 🔗
+              </DialogTitle>
+              <DialogDescription className="text-indigo-600">
+                Connect your existing wallet (MetaMask, WalletConnect, etc.) for additional options! 🌟
+              </DialogDescription>
+            </DialogHeader>
+            <div className="text-center space-y-6">
+              <div className="w-20 h-20 mx-auto bg-gradient-to-br from-indigo-400 to-purple-500 rounded-full flex items-center justify-center shadow-xl animate-pulse">
+                <Wallet className="w-10 h-10 text-white" />
+              </div>
+
+              <div className="space-y-4">
+                <p className="text-indigo-700">
+                  🔗 You can link an external wallet alongside your embedded wallet for more flexibility!
+                </p>
+                
+                <div className="bg-gradient-to-r from-indigo-100 to-purple-100 p-4 rounded-lg border-2 border-indigo-200">
+                  <h4 className="font-medium text-indigo-900 mb-2">✨ Benefits of linking:</h4>
+                  <ul className="text-sm space-y-1 text-indigo-800 text-left">
+                    <li>🔄 Use both embedded and external wallets</li>
+                    <li>💰 Access tokens from your existing wallet</li>
+                    <li>🛡️ Enhanced security options</li>
+                    <li>🚀 More connection flexibility</li>
+                  </ul>
+                </div>
+
+                <div className="space-y-3">
+                  <Button
+                    onClick={handleLinkWallet}
+                    className="w-full bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 text-white shadow-lg transform hover:scale-105 transition-all"
+                  >
+                    🔗 Link External Wallet
+                  </Button>
+                  
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      completeStep("link-wallet")
+                      setCurrentStep("ai-intro")
+                      setActiveModal(null)
+                    }}
+                    className="w-full"
+                  >
+                    ⏭️ Skip for now
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+        <DynamicMultiWalletPromptsWidget />
       </div>
     </div>
   )

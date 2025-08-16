@@ -1,13 +1,14 @@
 "use client"
 
 import { useState } from "react"
-import { usePrivy, useWallets } from '@privy-io/react-auth'
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Wallet, Copy, Eye, EyeOff, Coins, ArrowUpRight, ArrowDownLeft, CheckCircle } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { useDynamicContext } from "@dynamic-labs/sdk-react-core"
+import { useIsLoggedIn } from "@dynamic-labs/sdk-react-core"
 
 interface WalletWidgetProps {
   onWalletConnected?: () => void
@@ -16,9 +17,8 @@ interface WalletWidgetProps {
 }
 
 export function WalletWidget({ onWalletConnected, showBalance = true, className }: WalletWidgetProps) {
-  const { ready, authenticated, user, login } = usePrivy()
-  const { wallets } = useWallets()
-  const primaryWallet = wallets.length > 0 ? wallets[0] : null
+  const { user, sdkHasLoaded, primaryWallet, setShowAuthFlow } = useDynamicContext()
+  const authenticated = useIsLoggedIn()
   const [showAddress, setShowAddress] = useState(false)
   const [copied, setCopied] = useState(false)
 
@@ -27,7 +27,7 @@ export function WalletWidget({ onWalletConnected, showBalance = true, className 
   const mockTestTokens = "100"
 
   const handleConnect = () => {
-    login()
+    setShowAuthFlow(true)
     if (onWalletConnected) {
       // Simulate connection success
       setTimeout(() => onWalletConnected(), 2000)
@@ -46,7 +46,7 @@ export function WalletWidget({ onWalletConnected, showBalance = true, className 
     return `${address.slice(0, 6)}...${address.slice(-4)}`
   }
 
-  if (!ready) {
+  if (!sdkHasLoaded) {
     return (
       <Card className={cn("border-border", className)}>
         <CardHeader className="text-center">
