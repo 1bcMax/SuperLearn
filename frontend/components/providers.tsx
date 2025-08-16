@@ -4,13 +4,13 @@ import type React from "react"
 import { useState, useEffect } from "react"
 
 let DynamicContextProvider: any = null
-let EthereumWalletConnectors: any = null
+let FlowWalletConnectors: any = null
 
 try {
   const dynamicCore = require("@dynamic-labs/sdk-react-core")
-  const dynamicEthereum = require("@dynamic-labs/ethereum")
+  const dynamicFlow = require("@dynamic-labs/flow")
   DynamicContextProvider = dynamicCore.DynamicContextProvider
-  EthereumWalletConnectors = dynamicEthereum.EthereumWalletConnectors
+  FlowWalletConnectors = dynamicFlow.FlowWalletConnectors
 } catch (error) {
   console.log("[v0] Dynamic SDK not available, using fallback")
 }
@@ -32,7 +32,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
     return <FallbackProvider>{children}</FallbackProvider>
   }
 
-  if (!DynamicContextProvider || !EthereumWalletConnectors) {
+  if (!DynamicContextProvider || !FlowWalletConnectors) {
     console.log("[v0] Using fallback provider due to Dynamic SDK import issues")
     return <FallbackProvider>{children}</FallbackProvider>
   }
@@ -41,7 +41,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
     <DynamicContextProvider
       settings={{
         environmentId,
-        walletConnectors: [EthereumWalletConnectors],
+        walletConnectors: [FlowWalletConnectors],
         appName: "SuperLearn",
         appLogoUrl: "/ai-mentor-avatar.png",
         // Kid-friendly settings
