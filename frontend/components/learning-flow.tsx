@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { CheckCircle, Wallet, Brain, Trophy, ArrowRight, Loader2, ArrowDown, Zap, Target, Award } from "lucide-react"
 import { useDynamicContext, useUserWallets } from './providers'
+import { DynamicWidget } from "@dynamic-labs/sdk-react-core"
 // Simplified demo version - no Flow blockchain dependencies
 
 // Dynamic authentication hook
@@ -34,7 +35,7 @@ const useDynamicAuth = () => {
 
 // Dynamic Login Button Component
 const DynamicLoginButton = () => {
-  const { ready, authenticated, login } = useDynamicAuth()
+  const { ready, authenticated } = useDynamicAuth()
   
   if (!ready) {
     return (
@@ -55,10 +56,9 @@ const DynamicLoginButton = () => {
   }
   
   return (
-    <Button onClick={login} className="w-full">
-      <Wallet className="w-4 h-4 mr-2" />
-      Connect Ethereum & Flow Wallet
-    </Button>
+    <div className="w-full">
+      <DynamicWidget />
+    </div>
   )
 }
 

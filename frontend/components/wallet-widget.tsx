@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { useDynamicContext, useUserWallets } from './providers'
+import { DynamicWidget } from "@dynamic-labs/sdk-react-core"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -16,7 +17,7 @@ interface WalletWidgetProps {
 }
 
 export function WalletWidget({ onWalletConnected, showBalance = true, className }: WalletWidgetProps) {
-  const { isAuthenticated, user, primaryWallet, setShowAuthFlow } = useDynamicContext()
+  const { isAuthenticated, user, primaryWallet } = useDynamicContext()
   const wallets = useUserWallets()
   const ready = true // Dynamic is always ready
   const [showAddress, setShowAddress] = useState(false)
@@ -25,14 +26,6 @@ export function WalletWidget({ onWalletConnected, showBalance = true, className 
   // Mock balance for demo - in real app this would come from blockchain
   const mockBalance = "0.5"
   const mockTestTokens = "100"
-
-  const handleConnect = () => {
-    setShowAuthFlow(true)
-    if (onWalletConnected) {
-      // Simulate connection success
-      setTimeout(() => onWalletConnected(), 2000)
-    }
-  }
 
   const copyAddress = async () => {
     if (primaryWallet?.address) {
@@ -75,11 +68,9 @@ export function WalletWidget({ onWalletConnected, showBalance = true, className 
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Button onClick={handleConnect} className="w-full" size="lg">
-            Create My Wallet
-          </Button>
+          <DynamicWidget />
           <p className="text-xs text-muted-foreground text-center mt-3">
-            100% safe • Test network only • No real money
+            Multi-chain wallet • Ethereum & Flow EVM • Secure email login
           </p>
         </CardContent>
       </Card>

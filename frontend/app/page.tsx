@@ -5,6 +5,7 @@ import { ErrorBoundary } from "react-error-boundary"
 import { LearningFlow } from "@/components/learning-flow"
 import { ClaudeAIChat } from "@/components/claude-ai-chat"
 import { useDynamicContext, useUserWallets } from '@/components/providers'
+import { DynamicWidget } from "@dynamic-labs/sdk-react-core"
 
 type LearningStep = "registration" | "wallet" | "ai-intro" | "quiz" | "nft-reward"
 
@@ -12,49 +13,30 @@ type LearningStep = "registration" | "wallet" | "ai-intro" | "quiz" | "nft-rewar
 const DynamicDebugWidget = () => {
   const { isAuthenticated, user, primaryWallet, setShowAuthFlow, handleLogOut } = useDynamicContext()
   const wallets = useUserWallets()
-  const ready = true // Dynamic is always ready
-
-  if (!ready) {
-    return (
-      <div className="fixed top-4 right-4 z-50 bg-yellow-100 p-2 rounded text-xs border">
-        🔄 Loading Dynamic...
-      </div>
-    )
-  }
 
   return (
     <div className="fixed top-4 right-4 z-50 bg-white p-4 rounded-lg shadow-lg border max-w-sm">
       <h3 className="font-bold text-sm mb-2">🐛 Dynamic Debug</h3>
       
-      {!isAuthenticated ? (
-        <button 
-          onClick={() => setShowAuthFlow(true)}
-          className="w-full px-3 py-2 bg-blue-500 text-white rounded text-sm hover:bg-blue-600"
-        >
-          Connect with Dynamic
-        </button>
-      ) : (
-        <div className="space-y-2">
-          <button 
-            onClick={handleLogOut}
-            className="w-full px-3 py-2 bg-red-500 text-white rounded text-sm hover:bg-red-600"
-          >
-            Disconnect
-          </button>
-          <div className="text-xs space-y-1">
-            <p>✅ User: {user?.email || user?.phone || 'Connected'}</p>
-            {primaryWallet && (
-              <>
-                <p>💰 Wallet: {primaryWallet.address?.slice(0, 8)}...</p>
-                <p>🔗 Type: {primaryWallet.walletClientType || 'Dynamic'}</p>
-                <p>🌐 Chain: {primaryWallet.chainId || 'Unknown'}</p>
-              </>
-            )}
-          </div>
+      <div className="mb-2">
+        <DynamicWidget />
+      </div>
+      
+      {isAuthenticated && (
+        <div className="text-xs space-y-1 border-t pt-2">
+          <p>✅ User: {user?.email || user?.verifiedCredentials?.[0]?.email || 'Connected'}</p>
+          {primaryWallet && (
+            <>
+              <p>💰 Wallet: {primaryWallet.address?.slice(0, 8)}...</p>
+              <p>🔗 Type: {primaryWallet.connector?.name || 'Dynamic'}</p>
+              <p>🌐 Chain: {primaryWallet.network || 'Unknown'}</p>
+            </>
+          )}
+          <p>📱 Wallets: {wallets.length}</p>
         </div>
       )}
       
-      <div className="mt-2 text-xs text-gray-500">
+      <div className="mt-2 text-xs text-gray-500 border-t pt-2">
         <p>🌍 Supported: Ethereum + Flow EVM</p>
         <p>📧 Login: Email, SMS, Wallet</p>
       </div>
