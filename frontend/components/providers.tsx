@@ -5,26 +5,57 @@ import { useState, useEffect } from "react"
 
 const environmentId = process.env.NEXT_PUBLIC_DYNAMIC_ENVIRONMENT_ID || "live_default"
 
-// Dynamic imports with better error handling
-const loadDynamicSDK = async () => {
+// Multi-chain Components State
+interface DynamicComponents {
+  DynamicContextProvider: any
+  EthereumWalletConnectors: any
+  FlowWalletConnectors: any
+  DynamicWidget: any
+}
+
+// Load Dynamic Components Asynchronously
+const loadDynamicComponents = async (): Promise<DynamicComponents> => {
+  console.log("[Dynamic] Loading multi-chain components...")
+  
   try {
-    console.log("[Dynamic] Loading SDK modules...")
+    // Load all modules in parallel
+    const [coreModule, ethereumModule, flowModule] = await Promise.all([
+      import("@dynamic-labs/sdk-react-core"),
+      import("@dynamic-labs/ethereum"), 
+      import("@dynamic-labs/flow")
+    ])
     
-    // Load modules one by one to better isolate issues
-    const coreModule = await import("@dynamic-labs/sdk-react-core")
-    console.log("[Dynamic] Core module loaded:", Object.keys(coreModule))
+    const components = {
+      DynamicContextProvider: coreModule.DynamicContextProvider,
+      EthereumWalletConnectors: ethereumModule.EthereumWalletConnectors,
+      FlowWalletConnectors: flowModule.FlowWalletConnectors,
+      DynamicWidget: coreModule.DynamicWidget
+    }
     
-    const ethereumModule = await import("@dynamic-labs/ethereum")
-    console.log("[Dynamic] Ethereum module loaded:", Object.keys(ethereumModule))
+    console.log("[Dynamic] Multi-chain components loaded:", {
+      DynamicContextProvider: !!components.DynamicContextProvider,
+      EthereumWalletConnectors: !!components.EthereumWalletConnectors,
+      FlowWalletConnectors: !!components.FlowWalletConnectors,
+      DynamicWidget: !!components.DynamicWidget
+    })
+    
+    return components
+  } catch (error) {
+    console.error("[Dynamic] Multi-chain loading failed:", error)
+    
+    // Fallback to Ethereum only
+    console.log("[Dynamic] Attempting Ethereum-only fallback...")
+    const [coreModule, ethereumModule] = await Promise.all([
+      import("@dynamic-labs/sdk-react-core"),
+      import("@dynamic-labs/ethereum")
+    ])
     
     return {
       DynamicContextProvider: coreModule.DynamicContextProvider,
       EthereumWalletConnectors: ethereumModule.EthereumWalletConnectors,
-      DynamicWidget: coreModule.DynamicWidget,
+      FlowWalletConnectors: null,
+      DynamicWidget: coreModule.DynamicWidget
     }
-  } catch (error) {
-    console.error("[Dynamic] Failed to load SDK:", error)
-    throw error
   }
 }
 
@@ -34,8 +65,8 @@ function FallbackProvider({ children }: { children: React.ReactNode }) {
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const [mounted, setMounted] = useState(false)
-  const [dynamicComponents, setDynamicComponents] = useState<any>(null)
-  const [error, setError] = useState<string | null>(null)
+  const [dynamicReady, setDynamicReady] = useState(false)
+  const [dynamicComponents, setDynamicComponents] = useState<DynamicComponents | null>(null)
 
   useEffect(() => {
     setMounted(true)
@@ -46,27 +77,27 @@ export function Providers({ children }: { children: React.ReactNode }) {
 
     console.log("[Dynamic] Environment ID:", environmentId)
     
-    loadDynamicSDK()
-      .then((components) => {
-        console.log("[Dynamic] SDK loaded successfully!")
+    // Load Dynamic components asynchronously
+    const initializeDynamic = async () => {
+      try {
+        const components = await loadDynamicComponents()
         setDynamicComponents(components)
-      })
-      .catch((err) => {
-        console.error("[Dynamic] SDK loading failed:", err)
-        setError(err.message)
-      })
+        setDynamicReady(true)
+        console.log("[Dynamic] Multi-chain components loaded and ready!")
+      } catch (error) {
+        console.error("[Dynamic] Failed to load components:", error)
+        setDynamicReady(false)
+      }
+    }
+    
+    initializeDynamic()
   }, [mounted])
 
   if (!mounted) {
     return <FallbackProvider>{children}</FallbackProvider>
   }
 
-  if (error) {
-    console.log("[Dynamic] Using fallback due to error:", error)
-    return <FallbackProvider>{children}</FallbackProvider>
-  }
-
-  if (!dynamicComponents) {
+  if (!dynamicReady || !dynamicComponents) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
@@ -77,24 +108,79 @@ export function Providers({ children }: { children: React.ReactNode }) {
     )
   }
 
-  const { DynamicContextProvider, EthereumWalletConnectors } = dynamicComponents
+  if (!dynamicComponents.DynamicContextProvider || (!dynamicComponents.EthereumWalletConnectors && !dynamicComponents.FlowWalletConnectors)) {
+    console.log("[Dynamic] Components not available, using fallback")
+    return <FallbackProvider>{children}</FallbackProvider>
+  }
+
+  // Build wallet connectors array with available chains
+  const walletConnectors = []
+  if (dynamicComponents.EthereumWalletConnectors) {
+    walletConnectors.push(dynamicComponents.EthereumWalletConnectors)
+    console.log("[Dynamic] Added Ethereum wallet connectors")
+  }
+  if (dynamicComponents.FlowWalletConnectors) {
+    walletConnectors.push(dynamicComponents.FlowWalletConnectors)
+    console.log("[Dynamic] Added Flow wallet connectors")
+  }
+
+  console.log("[Dynamic] Rendering with multi-chain Dynamic provider:", {
+    chains: walletConnectors.length,
+    ethereum: !!dynamicComponents.EthereumWalletConnectors,
+    flow: !!dynamicComponents.FlowWalletConnectors
+  })
+
+  const { DynamicContextProvider } = dynamicComponents
 
   return (
     <DynamicContextProvider
       settings={{
         environmentId,
-        walletConnectors: [EthereumWalletConnectors],
+        walletConnectors,
         appName: "SuperLearn",
         initialAuthenticationMode: "connect-only",
+        // Add Flow EVM network configuration
+        evmNetworks: [
+          {
+            blockExplorerUrls: ['https://evm-testnet.flowscan.io'],
+            chainId: 545, // Flow EVM Testnet
+            chainName: 'Flow EVM Testnet',
+            iconUrls: ['https://cryptologos.cc/logos/flow-flow-logo.png'],
+            name: 'Flow EVM Testnet',
+            nativeCurrency: {
+              decimals: 18,
+              name: 'Flow',
+              symbol: 'FLOW',
+            },
+            networkId: 545,
+            rpcUrls: ['https://testnet.evm.nodes.onflow.org'],
+            vanityName: 'Flow Testnet',
+          },
+          {
+            blockExplorerUrls: ['https://evm.flowscan.io'],
+            chainId: 747, // Flow EVM Mainnet
+            chainName: 'Flow EVM Mainnet',
+            iconUrls: ['https://cryptologos.cc/logos/flow-flow-logo.png'],
+            name: 'Flow EVM Mainnet',
+            nativeCurrency: {
+              decimals: 18,
+              name: 'Flow',
+              symbol: 'FLOW',
+            },
+            networkId: 747,
+            rpcUrls: ['https://mainnet.evm.nodes.onflow.org'],
+            vanityName: 'Flow Mainnet',
+          }
+        ],
         events: {
           onAuthSuccess: (event: any) => {
-            console.log("[Dynamic] Auth success:", event)
+            console.log("[Dynamic] Multi-chain auth success:", event)
           },
           onLogout: (event: any) => {
-            console.log("[Dynamic] Logout:", event)
+            console.log("[Dynamic] Multi-chain logout:", event)
           },
           onAuthFailure: (event: any) => {
-            console.log("[Dynamic] Auth failure:", event)
+            console.log("[Dynamic] Multi-chain auth failure:", event)
           }
         }
       }}

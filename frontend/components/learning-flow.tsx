@@ -36,83 +36,105 @@ const useDynamicContextFallback = () => {
   }), [setShowAuthFlow, mockAuthenticated, mockWallet])
 }
 
-// Safe Dynamic context hook with proper structure
+// Safe Dynamic context hook that uses the provider's context
 const useSafeDynamicContext = () => {
   const fallbackContext = useDynamicContextFallback()
   
-  // Try to get the real Dynamic context if available, but use a ref to avoid re-renders
-  const [hasDynamic, setHasDynamic] = useState(false)
-  const [checkedDynamic, setCheckedDynamic] = useState(false)
-  
-  useEffect(() => {
-    if (checkedDynamic) return
+  // Try to get the real Dynamic context from the provider
+  try {
+    const { useDynamicContext } = require("@dynamic-labs/sdk-react-core")
+    const realContext = useDynamicContext()
     
-    try {
-      const { useDynamicContext } = require("@dynamic-labs/sdk-react-core")
-      // Just check if the module is available, don't call the hook here
-      setHasDynamic(true)
-      console.log("[Dynamic] Real Dynamic SDK detected")
-    } catch (error) {
-      console.log("[Dynamic] Dynamic SDK not available:", error.message)
-      setHasDynamic(false)
-    }
-    setCheckedDynamic(true)
-  }, [checkedDynamic])
-
-  // If we haven't checked yet, return loading state
-  if (!checkedDynamic) {
-    return {
-      setShowAuthFlow: () => {},
-      isAuthenticated: false,
-      user: null,
-      primaryWallet: null,
-    }
+    console.log("[Dynamic] Using real context:", {
+      isAuthenticated: realContext.isAuthenticated,
+      user: realContext.user?.email,
+      hasSetShowAuthFlow: typeof realContext.setShowAuthFlow === 'function'
+    })
+    
+    return realContext
+  } catch (error) {
+    console.log("[Dynamic] Using fallback context:", error.message)
+    return fallbackContext
   }
-
-  // Always use fallback for now to avoid infinite loops
-  return fallbackContext
 }
 
-// Safe Dynamic Widget with simple fallback
+// Safe Dynamic Widget that checks for the loaded widget
 const SafeDynamicWidget = () => {
-  const [checked, setChecked] = useState(false)
-  const [hasWidget, setHasWidget] = useState(false)
+  const [widgetReady, setWidgetReady] = useState(false)
+  const [checkingWidget, setCheckingWidget] = useState(true)
 
   useEffect(() => {
-    if (checked) return
-    
-    try {
-      const { DynamicWidget } = require("@dynamic-labs/sdk-react-core")
-      setHasWidget(!!DynamicWidget)
-      console.log("[SafeDynamicWidget] Widget check - available:", !!DynamicWidget)
-    } catch (error) {
-      console.log("[SafeDynamicWidget] Widget not available")
-      setHasWidget(false)
+    const checkWidget = () => {
+      // Check if the global Dynamic components are loaded
+      if (typeof window !== 'undefined' && (window as any).DynamicWidget) {
+        console.log("[SafeDynamicWidget] Global DynamicWidget found")
+        setWidgetReady(true)
+        setCheckingWidget(false)
+      } else {
+        // Try to import the widget
+        import("@dynamic-labs/sdk-react-core")
+          .then((module) => {
+            if (module.DynamicWidget) {
+              console.log("[SafeDynamicWidget] DynamicWidget imported successfully")
+              setWidgetReady(true)
+            } else {
+              console.log("[SafeDynamicWidget] DynamicWidget not in module")
+              setWidgetReady(false)
+            }
+            setCheckingWidget(false)
+          })
+          .catch((error) => {
+            console.log("[SafeDynamicWidget] Import failed:", error.message)
+            setWidgetReady(false)
+            setCheckingWidget(false)
+          })
+      }
     }
-    setChecked(true)
-  }, [checked])
+
+    checkWidget()
+  }, [])
 
   const handleFallbackClick = () => {
     console.log("[SafeDynamicWidget] Fallback button clicked")
     alert("🎯 This button works! Dynamic SDK not loaded, but the click handler is working. In a real setup, this would open the Dynamic authentication flow.")
   }
 
-  if (!checked) {
+  if (checkingWidget) {
     return (
       <Button disabled className="w-full bg-gradient-to-r from-blue-500 to-cyan-500 text-white shadow-lg">
-        🔄 Loading...
+        🔄 Loading Widget...
       </Button>
     )
   }
 
-  // For now, always show fallback to ensure the button works
+  if (widgetReady) {
+    // Use dynamic import for the widget
+    const DynamicWidgetComponent = React.lazy(() => 
+      import("@dynamic-labs/sdk-react-core").then(module => ({ 
+        default: module.DynamicWidget 
+      }))
+    )
+
+    return (
+      <div className="space-y-2">
+        <React.Suspense fallback={<Button disabled className="w-full bg-gradient-to-r from-blue-500 to-cyan-500 text-white shadow-lg">🔄 Loading...</Button>}>
+          <DynamicWidgetComponent />
+        </React.Suspense>
+        <p className="text-xs text-green-600 text-center">✅ Dynamic widget loaded</p>
+      </div>
+    )
+  }
+
   return (
-    <Button 
-      onClick={handleFallbackClick}
-      className="w-full bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white shadow-lg transform hover:scale-105 transition-all"
-    >
-      ✨ Create My Magical Wallet ✨
-    </Button>
+    <div className="space-y-2">
+      <Button 
+        onClick={handleFallbackClick}
+        className="w-full bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white shadow-lg transform hover:scale-105 transition-all"
+      >
+        ✨ Create My Magical Wallet ✨
+      </Button>
+      <p className="text-xs text-red-600 text-center">⚠️ Dynamic SDK not loaded</p>
+    </div>
   )
 }
 

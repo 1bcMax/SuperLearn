@@ -37,14 +37,19 @@ const DynamicDebugWidget = () => {
     const { user, primaryWallet, isAuthenticated } = components.useDynamicContext()
     return (
       <div className="fixed top-4 right-4 z-50 bg-white p-4 rounded-lg shadow-lg border max-w-sm">
-        <h3 className="font-bold text-sm mb-2">🐛 Dynamic Debug</h3>
+        <h3 className="font-bold text-sm mb-2">🐛 Multi-Chain Debug</h3>
         <components.DynamicWidget />
         {isAuthenticated && (
-          <div className="mt-2 text-xs">
+          <div className="mt-2 text-xs space-y-1">
             <p>✅ User: {user?.email || user?.userId}</p>
             <p>💰 Wallet: {primaryWallet?.address?.slice(0, 8)}...</p>
+            <p>🔗 Chain: {primaryWallet?.chain || 'Unknown'}</p>
+            <p>🌐 Network: {primaryWallet?.network || 'Unknown'}</p>
           </div>
         )}
+        <div className="mt-2 text-xs text-gray-500">
+          <p>🌍 Supported: Ethereum + Flow</p>
+        </div>
       </div>
     )
   }
