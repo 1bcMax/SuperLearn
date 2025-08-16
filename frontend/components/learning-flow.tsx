@@ -6,7 +6,6 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
-import { Progress } from "@/components/ui/progress"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { CheckCircle, Wallet, Brain, Trophy, ArrowRight, Loader2, ArrowDown, Zap, Target, Award } from "lucide-react"
 
@@ -183,22 +182,44 @@ export function LearningFlow() {
   }
 
   return (
-    <div className="min-h-screen bg-background p-4">
-      <div className="max-w-6xl mx-auto space-y-8">
-        {/* Header */}
+    <div className="min-h-screen bg-gradient-to-br from-pink-100 via-purple-50 via-blue-50 via-green-50 to-yellow-100 p-4 relative overflow-hidden">
+      <div className="absolute top-10 left-10 text-6xl animate-bounce">🦄</div>
+      <div className="absolute top-20 right-20 text-4xl animate-pulse">🌈</div>
+      <div className="absolute bottom-20 left-20 text-5xl animate-bounce" style={{ animationDelay: "1s" }}>
+        ⭐
+      </div>
+      <div className="absolute bottom-10 right-10 text-4xl animate-pulse" style={{ animationDelay: "0.5s" }}>
+        🎉
+      </div>
+      <div className="absolute top-1/2 left-5 text-3xl animate-bounce" style={{ animationDelay: "2s" }}>
+        🌟
+      </div>
+      <div className="absolute top-1/3 right-5 text-3xl animate-pulse" style={{ animationDelay: "1.5s" }}>
+        🎈
+      </div>
+
+      <div className="max-w-6xl mx-auto space-y-8 relative z-10">
         <div className="text-center space-y-4">
           <div className="flex items-center justify-center gap-2">
-            <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-              <Brain className="w-5 h-5 text-primary-foreground" />
+            <div className="w-8 h-8 bg-gradient-to-r from-pink-500 via-purple-500 to-blue-500 rounded-lg flex items-center justify-center shadow-lg">
+              <Brain className="w-5 h-5 text-white" />
             </div>
-            <span className="font-heading font-bold text-xl">SuperLearn</span>
+            <span className="font-heading font-bold text-xl bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+              SuperLearn
+            </span>
           </div>
-          <h1 className="font-heading font-bold text-3xl">Your Crypto Learning Journey</h1>
-          <Progress value={stepProgress[currentStep]} className="w-full max-w-md mx-auto" />
-          <p className="text-muted-foreground">Click on any step to see details and take action</p>
+          <h1 className="font-heading font-bold text-3xl bg-gradient-to-r from-pink-500 via-purple-500 to-blue-500 bg-clip-text text-transparent">
+            🦄 Your Magical Crypto Journey 🌈
+          </h1>
+          <div className="w-full max-w-md mx-auto bg-white/50 rounded-full p-1 shadow-lg">
+            <div
+              className="h-3 bg-gradient-to-r from-pink-400 via-purple-400 via-blue-400 to-green-400 rounded-full transition-all duration-500 shadow-sm"
+              style={{ width: `${stepProgress[currentStep]}%` }}
+            />
+          </div>
+          <p className="text-purple-700 font-medium">✨ Click on any step to see the magic happen! ✨</p>
         </div>
 
-        {/* Visual Flow Diagram */}
         <div className="relative">
           <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-6">
             {steps.map((step, index) => {
@@ -208,23 +229,23 @@ export function LearningFlow() {
               return (
                 <div key={step.id} className="relative">
                   <Card
-                    className={`cursor-pointer transition-all duration-300 hover:shadow-lg ${
+                    className={`cursor-pointer transition-all duration-300 hover:shadow-xl transform hover:-translate-y-1 ${
                       step.status === "active"
-                        ? "ring-2 ring-primary shadow-lg"
+                        ? "ring-4 ring-pink-300 shadow-2xl bg-gradient-to-br from-pink-50 to-purple-50"
                         : step.status === "completed"
-                          ? "bg-green-50 border-green-200"
-                          : "opacity-60"
-                    } ${isClickable ? "hover:scale-105" : "cursor-not-allowed"}`}
+                          ? "bg-gradient-to-br from-green-100 to-emerald-100 border-green-300 shadow-lg"
+                          : "opacity-70 bg-white/80"
+                    } ${isClickable ? "hover:scale-110" : "cursor-not-allowed"} backdrop-blur-sm border-2`}
                     onClick={() => isClickable && openStepModal(step.id)}
                   >
                     <CardContent className="p-4 text-center space-y-3">
                       <div
-                        className={`w-12 h-12 mx-auto rounded-full flex items-center justify-center ${
+                        className={`w-12 h-12 mx-auto rounded-full flex items-center justify-center shadow-lg ${
                           step.status === "active"
-                            ? "bg-primary text-primary-foreground"
+                            ? "bg-gradient-to-r from-pink-500 to-purple-500 text-white animate-pulse"
                             : step.status === "completed"
-                              ? "bg-green-500 text-white"
-                              : "bg-muted text-muted-foreground"
+                              ? "bg-gradient-to-r from-green-400 to-emerald-500 text-white"
+                              : "bg-gradient-to-r from-gray-300 to-gray-400 text-gray-600"
                         }`}
                       >
                         {step.status === "completed" ? (
@@ -234,33 +255,31 @@ export function LearningFlow() {
                         )}
                       </div>
                       <div>
-                        <h3 className="font-semibold text-sm">{step.title}</h3>
-                        <p className="text-xs text-muted-foreground">{step.description}</p>
+                        <h3 className="font-semibold text-sm text-purple-800">{step.title}</h3>
+                        <p className="text-xs text-purple-600">{step.description}</p>
                       </div>
                       {step.status === "active" && (
-                        <Badge variant="default" className="text-xs">
-                          Active
+                        <Badge className="text-xs bg-gradient-to-r from-pink-500 to-purple-500 text-white border-0 shadow-md">
+                          ✨ Active ✨
                         </Badge>
                       )}
                       {step.status === "completed" && (
-                        <Badge variant="secondary" className="text-xs bg-green-100 text-green-800">
-                          Complete
+                        <Badge className="text-xs bg-gradient-to-r from-green-400 to-emerald-500 text-white border-0 shadow-md">
+                          🎉 Complete 🎉
                         </Badge>
                       )}
                     </CardContent>
                   </Card>
 
-                  {/* Connection Arrow */}
                   {index < steps.length - 1 && (
                     <div className="hidden lg:block absolute top-1/2 -right-3 transform -translate-y-1/2 z-10">
-                      <ArrowRight className="w-6 h-6 text-muted-foreground" />
+                      <ArrowRight className="w-6 h-6 text-purple-400 drop-shadow-lg" />
                     </div>
                   )}
 
-                  {/* Mobile Connection Arrow */}
                   {index < steps.length - 1 && (
                     <div className="lg:hidden flex justify-center mt-2">
-                      <ArrowDown className="w-6 h-6 text-muted-foreground" />
+                      <ArrowDown className="w-6 h-6 text-purple-400 drop-shadow-lg" />
                     </div>
                   )}
                 </div>
@@ -269,83 +288,102 @@ export function LearningFlow() {
           </div>
         </div>
 
-        {/* Floating Action Modals */}
-
-        {/* Registration Modal */}
         <Dialog open={activeModal === "registration"} onOpenChange={() => setActiveModal(null)}>
-          <DialogContent>
+          <DialogContent className="bg-gradient-to-br from-pink-50 to-purple-50 border-2 border-pink-200">
             <DialogHeader>
-              <DialogTitle className="flex items-center gap-2">
-                <ArrowRight className="w-5 h-5" />
-                Quick Start Registration
+              <DialogTitle className="flex items-center gap-2 text-purple-800">
+                <ArrowRight className="w-5 h-5 text-pink-500" />🌟 Quick Start Registration 🌟
               </DialogTitle>
-              <DialogDescription>Enter your details to create your learning profile and get started</DialogDescription>
+              <DialogDescription className="text-purple-600">
+                Enter your details to create your magical learning profile and get started!
+              </DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="name">Your Name</Label>
-                <Input id="name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Enter your name" />
+                <Label htmlFor="name" className="text-purple-700 font-medium">
+                  Your Name 🦄
+                </Label>
+                <Input
+                  id="name"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="Enter your name"
+                  className="border-2 border-pink-200 focus:border-purple-400 bg-white/80"
+                />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="email">Email Address</Label>
+                <Label htmlFor="email" className="text-purple-700 font-medium">
+                  Email Address 📧
+                </Label>
                 <Input
                   id="email"
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="Enter your email"
+                  className="border-2 border-pink-200 focus:border-purple-400 bg-white/80"
                 />
               </div>
-              <Button onClick={handleRegistration} disabled={!email || !name || isLoading} className="w-full">
-                {isLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
-                Start My Journey
+              <Button
+                onClick={handleRegistration}
+                disabled={!email || !name || isLoading}
+                className="w-full bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600 text-white shadow-lg transform hover:scale-105 transition-all"
+              >
+                {isLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}🚀 Start My Magical Journey! 🚀
               </Button>
             </div>
           </DialogContent>
         </Dialog>
 
-        {/* Wallet Modal */}
         <Dialog open={activeModal === "wallet"} onOpenChange={() => setActiveModal(null)}>
-          <DialogContent>
+          <DialogContent className="bg-gradient-to-br from-blue-50 to-cyan-50 border-2 border-blue-200">
             <DialogHeader>
-              <DialogTitle className="flex items-center gap-2">
-                <Wallet className="w-5 h-5" />
-                Create Your Crypto Wallet
+              <DialogTitle className="flex items-center gap-2 text-blue-800">
+                <Wallet className="w-5 h-5 text-cyan-500" />💎 Create Your Crypto Wallet 💎
               </DialogTitle>
-              <DialogDescription>
-                We'll create a secure embedded wallet for you using Dynamic's technology
+              <DialogDescription className="text-blue-600">
+                We'll create a secure magical wallet for you using Dynamic's technology! ✨
               </DialogDescription>
             </DialogHeader>
             <div className="text-center space-y-6">
-              <div className="w-20 h-20 mx-auto bg-primary/10 rounded-full flex items-center justify-center">
-                <Wallet className="w-10 h-10 text-primary" />
+              <div className="w-20 h-20 mx-auto bg-gradient-to-br from-blue-400 to-cyan-500 rounded-full flex items-center justify-center shadow-xl animate-pulse">
+                <Wallet className="w-10 h-10 text-white" />
               </div>
 
               {!isAuthenticated && !walletCreating ? (
                 <div className="space-y-4">
-                  <p className="text-muted-foreground">
-                    Your wallet will be created automatically and secured with your email. No seed phrases to remember!
+                  <p className="text-blue-700">
+                    🌟 Your wallet will be created automatically and secured with your email. No complicated stuff to
+                    remember! 🌟
                   </p>
-                  <Button onClick={handleWalletCreation} size="lg" className="w-full">
-                    Create My Wallet
+                  <Button
+                    onClick={handleWalletCreation}
+                    size="lg"
+                    className="w-full bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white shadow-lg transform hover:scale-105 transition-all"
+                  >
+                    ✨ Create My Magical Wallet ✨
                   </Button>
                 </div>
               ) : walletCreating ? (
                 <div className="space-y-4">
-                  <Loader2 className="w-8 h-8 mx-auto animate-spin text-primary" />
+                  <div className="relative">
+                    <Loader2 className="w-8 h-8 mx-auto animate-spin text-cyan-500" />
+                    <div className="absolute inset-0 w-8 h-8 mx-auto rounded-full bg-gradient-to-r from-blue-400 to-cyan-400 opacity-20 animate-ping"></div>
+                  </div>
                   <div>
-                    <p className="font-medium">Creating your secure wallet...</p>
-                    <p className="text-sm text-muted-foreground">This will take just a moment</p>
+                    <p className="font-medium text-blue-800">🪄 Creating your secure wallet...</p>
+                    <p className="text-sm text-blue-600">Magic is happening! ✨</p>
                   </div>
                 </div>
               ) : (
                 <div className="space-y-4">
+                  <div className="text-6xl animate-bounce">🎉</div>
                   <CheckCircle className="w-12 h-12 mx-auto text-green-500" />
                   <div>
-                    <p className="font-medium text-green-700">Wallet Created Successfully!</p>
-                    <p className="text-sm text-muted-foreground">Address: {walletAddress?.substring(0, 15)}...</p>
-                    <Badge variant="secondary" className="mt-2">
-                      Ready for transactions
+                    <p className="font-medium text-green-700">🎊 Wallet Created Successfully! 🎊</p>
+                    <p className="text-sm text-green-600">Address: {walletAddress?.substring(0, 15)}...</p>
+                    <Badge className="mt-2 bg-gradient-to-r from-green-400 to-emerald-500 text-white border-0">
+                      🚀 Ready for adventures! 🚀
                     </Badge>
                   </div>
                 </div>
@@ -354,87 +392,94 @@ export function LearningFlow() {
           </DialogContent>
         </Dialog>
 
-        {/* AI Introduction Modal */}
         <Dialog open={activeModal === "ai-intro"} onOpenChange={() => setActiveModal(null)}>
-          <DialogContent>
+          <DialogContent className="bg-gradient-to-br from-purple-50 to-pink-50 border-2 border-purple-200">
             <DialogHeader>
-              <DialogTitle className="flex items-center gap-2">
-                <Brain className="w-5 h-5" />
-                Meet Your AI Mentor
+              <DialogTitle className="flex items-center gap-2 text-purple-800">
+                <Brain className="w-5 h-5 text-pink-500" />🤖 Meet Your AI Mentor 🤖
               </DialogTitle>
-              <DialogDescription>Learn essential crypto concepts with your personal AI guide</DialogDescription>
+              <DialogDescription className="text-purple-600">
+                Learn essential crypto concepts with your personal magical AI guide! ✨
+              </DialogDescription>
             </DialogHeader>
             <div className="text-center space-y-6">
-              <div className="w-20 h-20 mx-auto bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+              <div className="w-20 h-20 mx-auto bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center shadow-xl animate-bounce">
                 <Brain className="w-10 h-10 text-white" />
               </div>
 
               <div className="space-y-4">
-                <h3 className="font-semibold text-lg">Hi {name}! I'm Alex 🤖</h3>
-                <div className="text-left space-y-3 bg-muted/30 p-4 rounded-lg">
-                  <p className="text-sm">
-                    <strong>What you'll learn:</strong>
+                <h3 className="font-semibold text-lg text-purple-800">Hi {name}! I'm Alex 🤖✨</h3>
+                <div className="text-left space-y-3 bg-gradient-to-r from-purple-100 to-pink-100 p-4 rounded-lg border-2 border-purple-200">
+                  <p className="text-sm font-medium text-purple-800">
+                    🌟 <strong>What magical things you'll learn:</strong> 🌟
                   </p>
-                  <ul className="text-sm space-y-1 text-muted-foreground">
-                    <li>• What cryptocurrency really is</li>
-                    <li>• How blockchain transactions work</li>
-                    <li>• Why crypto is secure and decentralized</li>
-                    <li>• How to safely interact with blockchain</li>
+                  <ul className="text-sm space-y-1 text-purple-700">
+                    <li>🪙 What cryptocurrency really is</li>
+                    <li>⛓️ How blockchain transactions work</li>
+                    <li>🔒 Why crypto is secure and decentralized</li>
+                    <li>🛡️ How to safely interact with blockchain</li>
                   </ul>
                 </div>
 
-                <Button onClick={handleAIIntro} disabled={isLoading} size="lg" className="w-full">
-                  {isLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
-                  Start Learning with Alex
+                <Button
+                  onClick={handleAIIntro}
+                  disabled={isLoading}
+                  size="lg"
+                  className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white shadow-lg transform hover:scale-105 transition-all"
+                >
+                  {isLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}🚀 Start Learning with Alex! 🚀
                 </Button>
               </div>
             </div>
           </DialogContent>
         </Dialog>
 
-        {/* Practice Transaction Modal */}
         <Dialog open={activeModal === "practice"} onOpenChange={() => setActiveModal(null)}>
-          <DialogContent>
+          <DialogContent className="bg-gradient-to-br from-yellow-50 to-orange-50 border-2 border-yellow-200">
             <DialogHeader>
-              <DialogTitle className="flex items-center gap-2">
-                <Zap className="w-5 h-5" />
-                Your First Blockchain Transaction
+              <DialogTitle className="flex items-center gap-2 text-orange-800">
+                <Zap className="w-5 h-5 text-yellow-500" />⚡ Your First Blockchain Transaction ⚡
               </DialogTitle>
-              <DialogDescription>
-                Make a real transaction on the Flow testnet - completely safe for learning
+              <DialogDescription className="text-orange-600">
+                Make a real transaction on the Flow testnet - completely safe for learning! 🛡️✨
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-6">
-              <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-                <h4 className="font-medium text-blue-900 mb-2">Transaction Details:</h4>
-                <div className="text-sm space-y-1 text-blue-800">
-                  <p>• Amount: 0.1 FLOW (testnet tokens)</p>
-                  <p>• Network: Flow Testnet</p>
-                  <p>• Purpose: Learning transaction</p>
-                  <p>• Cost: Free (testnet)</p>
+              <div className="bg-gradient-to-r from-yellow-100 to-orange-100 p-4 rounded-lg border-2 border-yellow-300">
+                <h4 className="font-medium text-orange-900 mb-2">🎯 Transaction Details:</h4>
+                <div className="text-sm space-y-1 text-orange-800">
+                  <p>💰 Amount: 0.1 FLOW (testnet tokens)</p>
+                  <p>🌐 Network: Flow Testnet</p>
+                  <p>🎓 Purpose: Learning transaction</p>
+                  <p>🆓 Cost: Free (testnet)</p>
                 </div>
               </div>
 
               <div className="text-center">
-                <Button onClick={handlePracticeTransaction} disabled={isLoading} size="lg" className="w-full">
+                <Button
+                  onClick={handlePracticeTransaction}
+                  disabled={isLoading}
+                  size="lg"
+                  className="w-full bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white shadow-lg transform hover:scale-105 transition-all"
+                >
                   {isLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
-                  {isLoading ? "Processing Transaction..." : "Send My First Transaction"}
+                  {isLoading ? "🪄 Processing Magic..." : "🚀 Send My First Transaction! 🚀"}
                 </Button>
               </div>
 
               {isLoading && (
                 <div className="text-center space-y-2">
-                  <p className="text-sm text-muted-foreground">
-                    Your transaction is being processed on the blockchain...
+                  <p className="text-sm text-orange-700">
+                    ✨ Your transaction is being processed on the magical blockchain... ✨
                   </p>
                   <div className="flex justify-center space-x-1">
-                    <div className="w-2 h-2 bg-primary rounded-full animate-bounce"></div>
+                    <div className="w-3 h-3 bg-gradient-to-r from-yellow-400 to-orange-400 rounded-full animate-bounce"></div>
                     <div
-                      className="w-2 h-2 bg-primary rounded-full animate-bounce"
+                      className="w-3 h-3 bg-gradient-to-r from-orange-400 to-red-400 rounded-full animate-bounce"
                       style={{ animationDelay: "0.1s" }}
                     ></div>
                     <div
-                      className="w-2 h-2 bg-primary rounded-full animate-bounce"
+                      className="w-3 h-3 bg-gradient-to-r from-red-400 to-pink-400 rounded-full animate-bounce"
                       style={{ animationDelay: "0.2s" }}
                     ></div>
                   </div>
@@ -444,67 +489,77 @@ export function LearningFlow() {
           </DialogContent>
         </Dialog>
 
-        {/* Achievement Modal */}
         <Dialog open={activeModal === "achievement"} onOpenChange={() => setActiveModal(null)}>
-          <DialogContent>
+          <DialogContent className="bg-gradient-to-br from-green-50 to-emerald-50 border-2 border-green-200">
             <DialogHeader>
-              <DialogTitle className="flex items-center gap-2">
-                <Award className="w-5 h-5" />
-                Earn Your NFT Certificate
+              <DialogTitle className="flex items-center gap-2 text-green-800">
+                <Award className="w-5 h-5 text-emerald-500" />🏆 Earn Your NFT Certificate 🏆
               </DialogTitle>
-              <DialogDescription>Mint your permanent "Crypto Explorer" achievement on the blockchain</DialogDescription>
+              <DialogDescription className="text-green-600">
+                Mint your permanent "Crypto Explorer" achievement on the blockchain! 🎖️✨
+              </DialogDescription>
             </DialogHeader>
             <div className="text-center space-y-6">
               {!nftMinted ? (
                 <>
-                  <div className="w-24 h-24 mx-auto bg-gradient-to-br from-yellow-400 to-orange-500 rounded-lg flex items-center justify-center">
+                  <div className="w-24 h-24 mx-auto bg-gradient-to-br from-yellow-400 via-orange-500 to-red-500 rounded-xl flex items-center justify-center shadow-2xl animate-pulse">
                     <Trophy className="w-12 h-12 text-white" />
                   </div>
 
                   <div className="space-y-4">
-                    <h3 className="font-semibold text-lg">Congratulations! 🎉</h3>
-                    <p className="text-muted-foreground">
-                      You've successfully completed your first crypto transaction. Now claim your permanent achievement
-                      certificate as an NFT!
+                    <h3 className="font-semibold text-lg text-green-800">🎉 Congratulations! 🎉</h3>
+                    <p className="text-green-700">
+                      ✨ You've successfully completed your first crypto transaction! Now claim your permanent
+                      achievement certificate as a magical NFT! ✨
                     </p>
 
-                    <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
-                      <p className="text-sm text-yellow-800">
-                        <strong>Your NFT will include:</strong>
-                        <br />• Proof of transaction completion
-                        <br />• Learning milestone timestamp
-                        <br />• Unique certificate ID
-                        <br />• Permanent blockchain record
+                    <div className="bg-gradient-to-r from-yellow-100 to-orange-100 p-4 rounded-lg border-2 border-yellow-300">
+                      <p className="text-sm text-orange-800">
+                        <strong>🎁 Your magical NFT will include:</strong>
+                        <br />🏅 Proof of transaction completion
+                        <br />⏰ Learning milestone timestamp
+                        <br />🆔 Unique certificate ID
+                        <br />
+                        ⛓️ Permanent blockchain record
                       </p>
                     </div>
 
-                    <Button onClick={handleMintNFT} disabled={isLoading} size="lg" className="w-full">
-                      {isLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
-                      Mint My NFT Certificate
+                    <Button
+                      onClick={handleMintNFT}
+                      disabled={isLoading}
+                      size="lg"
+                      className="w-full bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white shadow-lg transform hover:scale-105 transition-all"
+                    >
+                      {isLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}✨ Mint My Magical NFT
+                      Certificate! ✨
                     </Button>
                   </div>
                 </>
               ) : (
                 <div className="space-y-6">
-                  <div className="w-32 h-32 mx-auto bg-gradient-to-br from-yellow-400 to-orange-500 rounded-xl flex items-center justify-center shadow-lg">
-                    <Trophy className="w-16 h-16 text-white" />
+                  <div className="relative">
+                    <div className="w-32 h-32 mx-auto bg-gradient-to-br from-yellow-400 via-orange-500 to-red-500 rounded-xl flex items-center justify-center shadow-2xl animate-bounce">
+                      <Trophy className="w-16 h-16 text-white" />
+                    </div>
+                    <div className="absolute -top-2 -right-2 text-4xl animate-spin">✨</div>
+                    <div className="absolute -bottom-2 -left-2 text-3xl animate-bounce">🎉</div>
                   </div>
 
                   <div className="space-y-4">
-                    <h3 className="font-bold text-xl text-green-700">NFT Minted Successfully!</h3>
-                    <div className="bg-green-50 p-4 rounded-lg border border-green-200">
-                      <h4 className="font-medium text-green-900">Crypto Explorer Certificate</h4>
+                    <h3 className="font-bold text-xl text-green-700">🎊 NFT Minted Successfully! 🎊</h3>
+                    <div className="bg-gradient-to-r from-green-100 to-emerald-100 p-4 rounded-lg border-2 border-green-300">
+                      <h4 className="font-medium text-green-900">🏆 Crypto Explorer Certificate 🏆</h4>
                       <p className="text-sm text-green-700 mt-1">
-                        Your achievement is now permanently recorded on the Flow blockchain
+                        ✨ Your achievement is now permanently recorded on the Flow blockchain! ✨
                       </p>
                     </div>
-                    <Badge variant="secondary" className="bg-green-100 text-green-800">
-                      Achievement Unlocked
+                    <Badge className="bg-gradient-to-r from-green-400 to-emerald-500 text-white border-0 shadow-lg">
+                      🎖️ Achievement Unlocked! 🎖️
                     </Badge>
                   </div>
 
-                  <Button variant="outline" className="w-full bg-transparent">
-                    Continue Your Crypto Journey
+                  <Button className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white shadow-lg transform hover:scale-105 transition-all">
+                    🚀 Continue Your Magical Crypto Journey! 🚀
                   </Button>
                 </div>
               )}
