@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { ErrorBoundary } from "react-error-boundary"
 import { LearningFlow } from "@/components/learning-flow"
-import { AIAgentChat } from "@/components/ai-agent-chat"
+import { ClaudeAIChat } from "@/components/claude-ai-chat"
 import { usePrivy, useWallets } from '@privy-io/react-auth'
 
 type LearningStep = "registration" | "wallet" | "ai-intro" | "quiz" | "nft-reward"
@@ -145,7 +145,7 @@ export default function HomePage() {
               setNftMinted={setNftMinted}
             />
           ) : (
-            <AIAgentChat />
+            <ClaudeAIChat />
           )}
         </div>
       </div>
