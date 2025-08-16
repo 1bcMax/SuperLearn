@@ -11,27 +11,7 @@ Traditional crypto education relies on theoretical knowledge without practical v
 
 **What makes this different**: SuperLearn verifies understanding through actual blockchain behavior, not quiz scores.
 
-## Technical Architecture
 
-### **Protocol Stack Integration**
-
-**1. Dynamic SDK - Frictionless Wallet Access**
-- **Role**: Instant wallet creation without seed phrase complexity
-- **Implementation**: Email-based registration with embedded wallets
-- **36h Strategy**: Use Dynamic's quickstart template, focus only on wallet connection
-- **Why Dynamic**: Zero Web3 friction for kids, instant onboarding
-
-**2. Fetch.ai uAgents - Intelligent AI Mentor**
-- **Role**: Web3-native AI that can interact directly with blockchains
-- **Implementation**: Deploy educational uAgent that guides transactions and monitors on-chain results
-- **36h Strategy**: Single uAgent with 3 pre-programmed learning scenarios
-- **Why uAgents**: Only AI system that can natively understand and execute blockchain operations
-
-**3. Flow Actions (FLIP-338) - Skill Verification System**
-- **Role**: Standardized, on-chain skill verification modules
-- **Implementation**: Create one basic Action that verifies successful transaction completion
-- **36h Strategy**: Single "FirstTransaction" Action that validates user sent FLOW successfully
-- **Why Flow Actions**: Creates reusable educational building blocks for the ecosystem
 
 ## Simplified User Flow (36-Hour MVP)
 
