@@ -7,7 +7,7 @@ import { ClaudeAIChat } from "@/components/claude-ai-chat"
 import { useDynamicContext, useUserWallets } from '@/components/providers'
 import { DynamicWidget } from "@dynamic-labs/sdk-react-core"
 
-type LearningStep = "registration" | "wallet" | "ai-intro" | "quiz" | "nft-reward"
+type LearningStep = "wallet" | "ai-intro" | "quiz" | "nft-reward"
 
 // Dynamic Debug Widget
 const DynamicDebugWidget = () => {
@@ -65,7 +65,7 @@ export default function HomePage() {
   const [currentView, setCurrentView] = useState<'learning' | 'ai-chat'>('learning')
   
   // Persistent learning flow state
-  const [currentStep, setCurrentStep] = useState<LearningStep>("registration")
+  const [currentStep, setCurrentStep] = useState<LearningStep>("wallet")
   const [completedSteps, setCompletedSteps] = useState<Set<LearningStep>>(new Set())
   const [email, setEmail] = useState("")
   const [name, setName] = useState("")

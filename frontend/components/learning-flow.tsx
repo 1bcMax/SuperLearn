@@ -62,7 +62,7 @@ const DynamicLoginButton = () => {
   )
 }
 
-type LearningStep = "registration" | "wallet" | "ai-intro" | "quiz" | "nft-reward"
+type LearningStep = "wallet" | "ai-intro" | "quiz" | "nft-reward"
 
 interface StepData {
   id: LearningStep
@@ -124,6 +124,10 @@ export function LearningFlow({
 
   const { ready, authenticated, user, primaryWallet, login } = useDynamicAuth()
   
+  const completeStep = (step: LearningStep) => {
+    setCompletedSteps(new Set([...completedSteps, step]))
+  }
+  
   // Quiz questions data
   const quizQuestions = [
     {
@@ -173,13 +177,6 @@ export function LearningFlow({
 
   const steps: StepData[] = [
     {
-      id: "registration",
-      title: "Quick Start",
-      description: "Register with email",
-      icon: ArrowRight,
-      status: currentStep === "registration" ? "active" : user ? "completed" : "pending",
-    },
-    {
       id: "wallet",
       title: "Create Wallet",
       description: "Ethereum & Flow EVM wallet",
@@ -210,43 +207,34 @@ export function LearningFlow({
   ]
 
   const stepProgress = {
-    registration: 20,
-    wallet: 40,
-    "ai-intro": 60,
-    quiz: 80,
+    wallet: 25,
+    "ai-intro": 50,
+    quiz: 75,
     "nft-reward": 100,
   }
 
+  // Handle wallet connection completion
   useEffect(() => {
-    if (authenticated && primaryWallet && currentStep === "wallet") {
+    if (authenticated && primaryWallet) {
+      console.log("[SuperLearn] Wallet connected:", {
+        authenticated,
+        wallet: primaryWallet.address,
+        currentStep
+      })
       setWalletAddress(primaryWallet.address)
       setWalletCreating(false)
-      completeStep("wallet")
-      setTimeout(() => {
-        setCurrentStep("ai-intro")
-      }, 1000)
+      
+      // Complete wallet step if we're on it and haven't completed it yet
+      if (currentStep === "wallet" && !completedSteps.has("wallet")) {
+        console.log("[SuperLearn] Completing wallet step")
+        completeStep("wallet")
+        setTimeout(() => {
+          setCurrentStep("ai-intro")
+        }, 1500)
+      }
     }
-  }, [authenticated, primaryWallet, currentStep])
+  }, [authenticated, primaryWallet, currentStep, completedSteps])
 
-  const completeStep = (step: LearningStep) => {
-    setCompletedSteps(new Set([...completedSteps, step]))
-  }
-
-  const handleRegistration = async () => {
-    if (!email || !name) return
-
-    console.log("[SuperLearn] Starting registration with:", { name, email })
-    setIsLoading(true)
-    
-    // Simulate registration process
-    await new Promise((resolve) => setTimeout(resolve, 1500))
-    
-    console.log("[SuperLearn] Registration completed, proceeding to wallet creation")
-    completeStep("registration")
-    setCurrentStep("wallet")
-    setIsLoading(false)
-    setActiveModal(null)
-  }
 
   const handleWalletCreation = () => {
     console.log("[SuperLearn] Wallet creation button clicked")
@@ -447,61 +435,6 @@ export function LearningFlow({
           </div>
         </div>
 
-        <Dialog open={activeModal === "registration"} onOpenChange={() => setActiveModal(null)}>
-          <DialogContent className="bg-gradient-to-br from-pink-50 to-purple-50 border-2 border-pink-200">
-            <DialogHeader>
-              <DialogTitle className="flex items-center gap-2 text-purple-800">
-                <ArrowRight className="w-5 h-5 text-pink-500" />🌟 Quick Start Registration 🌟
-              </DialogTitle>
-              <DialogDescription className="text-purple-600">
-                Enter your details to create your magical learning profile and get started!
-              </DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="name" className="text-purple-700 font-medium">
-                  Your Name 🦄
-                </Label>
-                <Input
-                  id="name"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="Enter your name"
-                  className="border-2 border-pink-200 focus:border-purple-400 bg-white/80"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="email" className="text-purple-700 font-medium">
-                  Email Address 📧
-                </Label>
-                <Input
-                  id="email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="Enter your email"
-                  className="border-2 border-pink-200 focus:border-purple-400 bg-white/80"
-                />
-              </div>
-              <div className="bg-gradient-to-r from-purple-100 to-pink-100 p-4 rounded-lg border-2 border-purple-200">
-                <h4 className="font-semibold text-purple-800 mb-2">🎯 What you'll learn:</h4>
-                <ul className="text-sm space-y-1 text-purple-700 text-left">
-                  <li>💰 Create your first crypto wallet</li>
-                  <li>🔒 Understand blockchain security</li>
-                  <li>⚡ Make your first transaction</li>
-                  <li>🏆 Earn an NFT certificate</li>
-                </ul>
-              </div>
-              <Button
-                onClick={handleRegistration}
-                disabled={!email || !name || isLoading}
-                className="w-full bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600 text-white shadow-lg transform hover:scale-105 transition-all"
-              >
-                {isLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}🚀 Start My Magical Journey! 🚀
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
 
         <Dialog open={activeModal === "wallet"} onOpenChange={() => setActiveModal(null)}>
           <DialogContent className="bg-gradient-to-br from-blue-50 to-cyan-50 border-2 border-blue-200">
