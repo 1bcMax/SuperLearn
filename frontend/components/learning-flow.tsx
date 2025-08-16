@@ -220,12 +220,18 @@ export function LearningFlow() {
   }
 
   const handleRegistration = async () => {
-    console.log('I was called')
-    setShowAuthFlow(true)
-    // Skip email collection and go directly to wallet creation with Dynamic
-    console.log("[SuperLearn] Starting registration flow - going to wallet creation")
+    if (!email || !name) return
+
+    console.log("[SuperLearn] Starting registration with:", { name, email })
+    setIsLoading(true)
+    
+    // Simulate registration process
+    await new Promise((resolve) => setTimeout(resolve, 1500))
+    
+    console.log("[SuperLearn] Registration completed, proceeding to wallet creation")
     completeStep("registration")
     setCurrentStep("wallet")
+    setIsLoading(false)
     setActiveModal(null)
   }
 
@@ -402,28 +408,47 @@ export function LearningFlow() {
                 <ArrowRight className="w-5 h-5 text-pink-500" />🌟 Quick Start Registration 🌟
               </DialogTitle>
               <DialogDescription className="text-purple-600">
-                Welcome to SuperLearn! Let's start your crypto learning adventure.
+                Enter your details to create your magical learning profile and get started!
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
-              <div className="text-center space-y-4">
-                <div className="text-6xl animate-bounce">🦄</div>
-                <p className="text-purple-700">
-                  ✨ Ready to start your magical crypto adventure? You'll create a secure wallet and learn how to use blockchain technology safely! ✨
-                </p>
-                <div className="bg-gradient-to-r from-purple-100 to-pink-100 p-4 rounded-lg border-2 border-purple-200">
-                  <h4 className="font-semibold text-purple-800 mb-2">🎯 What you'll learn:</h4>
-                  <ul className="text-sm space-y-1 text-purple-700 text-left">
-                    <li>💰 Create your first crypto wallet</li>
-                    <li>🔒 Understand blockchain security</li>
-                    <li>⚡ Make your first transaction</li>
-                    <li>🏆 Earn an NFT certificate</li>
-                  </ul>
-                </div>
+              <div className="space-y-2">
+                <Label htmlFor="name" className="text-purple-700 font-medium">
+                  Your Name 🦄
+                </Label>
+                <Input
+                  id="name"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="Enter your name"
+                  className="border-2 border-pink-200 focus:border-purple-400 bg-white/80"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="email" className="text-purple-700 font-medium">
+                  Email Address 📧
+                </Label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="Enter your email"
+                  className="border-2 border-pink-200 focus:border-purple-400 bg-white/80"
+                />
+              </div>
+              <div className="bg-gradient-to-r from-purple-100 to-pink-100 p-4 rounded-lg border-2 border-purple-200">
+                <h4 className="font-semibold text-purple-800 mb-2">🎯 What you'll learn:</h4>
+                <ul className="text-sm space-y-1 text-purple-700 text-left">
+                  <li>💰 Create your first crypto wallet</li>
+                  <li>🔒 Understand blockchain security</li>
+                  <li>⚡ Make your first transaction</li>
+                  <li>🏆 Earn an NFT certificate</li>
+                </ul>
               </div>
               <Button
                 onClick={handleRegistration}
-                disabled={isLoading}
+                disabled={!email || !name || isLoading}
                 className="w-full bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600 text-white shadow-lg transform hover:scale-105 transition-all"
               >
                 {isLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}🚀 Start My Magical Journey! 🚀
