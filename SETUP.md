@@ -64,7 +64,6 @@ For real blockchain transactions:
 
 ### AI Mentor Not Responding
 - ✅ Check OpenAI API Key is set
-- ✅ Ensure uAgent is running on port 8001
 - ✅ Check console for error messages
 
 ### Styling Issues

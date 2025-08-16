@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { CheckCircle, Wallet, Brain, Trophy, ArrowRight, Loader2, ArrowDown, Zap, Target, Award } from "lucide-react"
 import { usePrivy, useWallets } from '@privy-io/react-auth'
+// Simplified demo version - no Flow blockchain dependencies
 
 // Privy authentication hook
 const usePrivyAuth = () => {
@@ -120,6 +121,9 @@ export function LearningFlow({
   const [walletCreating, setWalletCreating] = useState(false)
   const [activeModal, setActiveModal] = useState<string | null>(null)
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null)
+  // Simplified demo state
+  const [demoNftMinting, setDemoNftMinting] = useState(false);
+
 
   const { ready, authenticated, user, primaryWallet, login } = usePrivyAuth()
   
@@ -314,11 +318,19 @@ export function LearningFlow({
 
   const handleMintNFT = async () => {
     setIsLoading(true)
+    setDemoNftMinting(true)
+    
+    // Simulate NFT minting process
     await new Promise((resolve) => setTimeout(resolve, 3000))
+    
+    // Generate demo transaction hash
+    const demoTxHash = `0x${Math.random().toString(16).substr(2, 64)}`
+    setTransactionHash(demoTxHash)
+    
     setNftMinted(true)
     completeStep("nft-reward")
     setIsLoading(false)
-    setActiveModal(null)
+    setDemoNftMinting(false)
   }
 
   const openStepModal = (stepId: LearningStep) => {

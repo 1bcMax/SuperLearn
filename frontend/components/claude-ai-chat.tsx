@@ -32,7 +32,16 @@ export function ClaudeAIChat({ childName = "there" }: ClaudeAIChatProps) {
       type: "claude",
       content: "Hello! I'm Claude, your AI learning assistant! 🎓✨ I can help you learn about blockchain, cryptocurrency, AI, programming, and many other topics. I can also create personalized quizzes to test your knowledge. What would you like to explore today?",
       timestamp: new Date(),
-      suggestions: ["Learn about blockchain", "Explain cryptocurrency", "Generate a quiz", "What is AI?"],
+      suggestions: [
+        "What is blockchain technology?",
+        "How do cryptocurrency wallets work?", 
+        "Explain Bitcoin vs Ethereum",
+        "What are smart contracts?",
+        "How does crypto mining work?",
+        "What is DeFi?",
+        "Generate a crypto quiz",
+        "What are NFTs?"
+      ],
       messageType: "chat"
     }
   ])
@@ -91,34 +100,30 @@ export function ClaudeAIChat({ childName = "there" }: ClaudeAIChatProps) {
     setIsTyping(false)
   }
 
-  const callClaudeAPI = async (prompt: string, systemPrompt?: string) => {
+  const callClaudeAPI = async (message: string, type: string = "chat", options?: any) => {
     try {
-      const response = await fetch("https://api.anthropic.com/v1/messages", {
+      const response = await fetch("/api/chat", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "x-api-key": process.env.ANTHROPIC_API_KEY || "",
-          "anthropic-version": "2023-06-01"
         },
         body: JSON.stringify({
-          model: "claude-3-5-sonnet-20241022",
-          max_tokens: 1500,
-          system: systemPrompt || "You are a helpful educational AI assistant specializing in blockchain, cryptocurrency, AI, and programming. Provide clear, engaging explanations appropriate for the user's level.",
-          messages: [
-            {
-              role: "user",
-              content: prompt
-            }
-          ]
+          message,
+          type,
+          ...options
         })
       })
 
       if (!response.ok) {
-        throw new Error(`Claude API error: ${response.status}`)
+        throw new Error(`API error: ${response.status}`)
       }
 
       const data = await response.json()
-      return data.content[0].text
+      if (!data.success) {
+        throw new Error(data.error || "API request failed")
+      }
+      
+      return data.response
     } catch (error) {
       console.error("Claude API Error:", error)
       throw error
@@ -126,20 +131,12 @@ export function ClaudeAIChat({ childName = "there" }: ClaudeAIChatProps) {
   }
 
   const generateLearningContent = async (topic: string, userLevel: string = "Beginner", learningStyle: string = "Visual") => {
-    const systemPrompt = `You are an expert educational AI assistant. Create comprehensive educational content that is engaging and appropriate for different learning levels and styles.`
-    
-    const prompt = `Create educational content about "${topic}" for a ${userLevel} level learner with a ${learningStyle} learning preference.
-
-Please structure your response with:
-1. A clear, engaging explanation of the topic
-2. 4-5 key learning points
-3. 3-4 practical next steps for continued learning  
-4. 2-3 real-world examples or applications
-
-Make the content appropriate for ${userLevel} level and consider ${learningStyle} learning preferences. Include emojis and make it engaging!`
-
     try {
-      const response = await callClaudeAPI(prompt, systemPrompt)
+      const response = await callClaudeAPI(topic, "learn", {
+        topic,
+        user_level: userLevel,
+        learning_style: learningStyle
+      })
       return response
     } catch (error) {
       return `I'd be happy to help you learn about ${topic}! This is an exciting field with many practical applications. Let me know if you'd like me to explain any specific aspects or create a quiz about it.`
@@ -147,21 +144,12 @@ Make the content appropriate for ${userLevel} level and consider ${learningStyle
   }
 
   const generateQuiz = async (topic: string, difficulty: string = "medium", numQuestions: number = 3) => {
-    const systemPrompt = `You are an expert educational AI assistant. Create engaging quiz questions that test understanding and include real-world context.`
-    
-    const prompt = `Create a ${difficulty} difficulty quiz about "${topic}" with exactly ${numQuestions} multiple choice questions.
-
-For each question, provide:
-- The question text
-- 4 answer options (A, B, C, D)
-- The correct answer
-- An explanation of why the answer is correct
-- A brief real-world application or example
-
-Make the questions practical and relevant to real-world applications of ${topic}. Format it nicely with emojis and clear structure!`
-
     try {
-      const response = await callClaudeAPI(prompt, systemPrompt)
+      const response = await callClaudeAPI(topic, "quiz", {
+        topic,
+        difficulty,
+        num_questions: numQuestions
+      })
       return response
     } catch (error) {
       return `I'd be happy to create a quiz about ${topic}! Unfortunately, I'm having some trouble generating the questions right now. Would you like to try a different topic or ask me to explain ${topic} concepts instead?`
@@ -207,8 +195,7 @@ Make the questions practical and relevant to real-world applications of ${topic}
         ]
       } else {
         // Regular chat
-        const systemPrompt = "You are a helpful educational AI assistant. Provide clear, encouraging responses. If users ask about learning topics, offer to provide detailed explanations or generate quizzes."
-        response = await callClaudeAPI(content, systemPrompt)
+        response = await callClaudeAPI(content, "chat")
         suggestions = getSmartSuggestions(content)
       }
 
@@ -221,14 +208,26 @@ Make the questions practical and relevant to real-world applications of ${topic}
   const getSmartSuggestions = (message: string): string[] => {
     const lowerMessage = message.toLowerCase()
     
-    if (lowerMessage.includes("blockchain") || lowerMessage.includes("crypto")) {
-      return ["Learn about smart contracts", "Generate a blockchain quiz", "Explain DeFi", "What is Web3?"]
+    if (lowerMessage.includes("blockchain")) {
+      return ["What are smart contracts?", "How does consensus work?", "Explain blockchain nodes", "Generate a blockchain quiz"]
+    } else if (lowerMessage.includes("bitcoin")) {
+      return ["How does Bitcoin mining work?", "What is proof of work?", "Bitcoin vs other cryptos", "Generate a Bitcoin quiz"]
+    } else if (lowerMessage.includes("ethereum")) {
+      return ["What are smart contracts?", "Explain gas fees", "What is proof of stake?", "Generate an Ethereum quiz"]
+    } else if (lowerMessage.includes("defi")) {
+      return ["What is yield farming?", "How do DEXs work?", "Explain liquidity pools", "Generate a DeFi quiz"]
+    } else if (lowerMessage.includes("nft")) {
+      return ["How are NFTs created?", "NFT marketplaces explained", "NFT vs fungible tokens", "Generate an NFT quiz"]
+    } else if (lowerMessage.includes("wallet")) {
+      return ["Hot vs cold wallets", "How do private keys work?", "Multi-signature wallets", "Generate a wallet security quiz"]
+    } else if (lowerMessage.includes("crypto") || lowerMessage.includes("cryptocurrency")) {
+      return ["Bitcoin vs Ethereum", "What is staking?", "Crypto trading basics", "Generate a crypto quiz"]
     } else if (lowerMessage.includes("ai") || lowerMessage.includes("artificial intelligence")) {
       return ["Learn about machine learning", "Generate an AI quiz", "Explain neural networks", "What is deep learning?"]
     } else if (lowerMessage.includes("programming") || lowerMessage.includes("coding")) {
       return ["Learn about Python", "Generate a programming quiz", "Explain algorithms", "What are data structures?"]
     } else {
-      return ["Learn about blockchain", "Generate a quiz", "Explain AI", "What is programming?"]
+      return ["What is blockchain?", "How do wallets work?", "Explain Bitcoin", "Generate a crypto quiz"]
     }
   }
 
@@ -284,10 +283,10 @@ Make the questions practical and relevant to real-world applications of ${topic}
             </Avatar>
             <div className="flex-1">
               <h3 className="font-heading font-semibold text-lg">Claude - AI Learning Assistant</h3>
-              <p className="text-sm text-muted-foreground flex items-center gap-2">
+              <div className="text-sm text-muted-foreground flex items-center gap-2">
                 <div className="w-2 h-2 rounded-full bg-green-500" />
                 Ready to help you learn!
-              </p>
+              </div>
             </div>
             <div className="flex gap-2">
               <Badge variant="secondary" className="bg-blue-100 text-blue-700">
@@ -358,9 +357,9 @@ Make the questions practical and relevant to real-world applications of ${topic}
                       </div>
                     )}
 
-                    <p className="text-xs text-muted-foreground mt-1 ml-2">
+                    <div className="text-xs text-muted-foreground mt-1 ml-2">
                       {message.timestamp.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-                    </p>
+                    </div>
                   </div>
 
                   {message.type === "user" && (
@@ -380,7 +379,7 @@ Make the questions practical and relevant to real-world applications of ${topic}
               <Input
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
-                placeholder="Ask me about blockchain, AI, programming, or request a quiz..."
+                placeholder="Ask me about blockchain, Bitcoin, Ethereum, DeFi, NFTs, wallets, or request a quiz..."
                 className="flex-1"
                 disabled={isTyping}
               />
