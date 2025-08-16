@@ -47,7 +47,7 @@ export function AIAgentChat() {
 
   const checkAgentStatus = async () => {
     try {
-      const response = await fetch('http://localhost:8001/agent-status')
+      const response = await fetch('http://localhost:8003/agent-status')
       const data = await response.json()
       setAgentStatus(data.agent_running ? 'online' : 'offline')
     } catch {
@@ -79,7 +79,7 @@ export function AIAgentChat() {
     setIsLoading(true)
 
     try {
-      const response = await fetch('http://localhost:8001/chat', {
+      const response = await fetch('http://localhost:8003/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ message: userInput })
@@ -93,7 +93,7 @@ export function AIAgentChat() {
         addMessage('Sorry, I encountered an error. Please try again.', 'agent')
       }
     } catch (error) {
-      addMessage('Unable to connect to the AI agent. Please check if the bridge server is running on port 8001.', 'agent')
+      addMessage('Unable to connect to the AI agent. Please check if the bridge server is running on port 8003.', 'agent')
     }
 
     setIsLoading(false)
@@ -108,7 +108,7 @@ export function AIAgentChat() {
     setIsLoading(true)
 
     try {
-      const response = await fetch('http://localhost:8001/learn', {
+      const response = await fetch('http://localhost:8003/learn', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -134,7 +134,7 @@ export function AIAgentChat() {
         addMessage('Sorry, I couldn\'t generate learning content for that topic. Please try again.', 'agent')
       }
     } catch (error) {
-      addMessage('Unable to connect to the AI agent. Please check if the bridge server is running on port 8001.', 'agent')
+      addMessage('Unable to connect to the AI agent. Please check if the bridge server is running on port 8003.', 'agent')
     }
 
     setIsLoading(false)
@@ -149,7 +149,7 @@ export function AIAgentChat() {
     setIsLoading(true)
 
     try {
-      const response = await fetch('http://localhost:8001/quiz', {
+      const response = await fetch('http://localhost:8003/quiz', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -180,7 +180,7 @@ export function AIAgentChat() {
         addMessage('Sorry, I couldn\'t generate a quiz for that topic. Please try again.', 'agent')
       }
     } catch (error) {
-      addMessage('Unable to connect to the AI agent. Please check if the bridge server is running on port 8001.', 'agent')
+      addMessage('Unable to connect to the AI agent. Please check if the bridge server is running on port 8003.', 'agent')
     }
 
     setIsLoading(false)

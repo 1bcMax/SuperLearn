@@ -14,7 +14,7 @@ CORS(app)
 
 # Configuration
 AGENT_URL = "http://localhost:8002/submit"
-BRIDGE_PORT = 8001
+BRIDGE_PORT = 8003
 
 class AgentBridge:
     def __init__(self):
@@ -238,6 +238,6 @@ def agent_status():
 if __name__ == '__main__':
     print(f"Starting Bridge Server on port {BRIDGE_PORT}")
     print(f"Connecting to AI Agent at {AGENT_URL}")
-    print("Health check available at: http://localhost:8001/health")
+    print(f"Health check available at: http://localhost:{BRIDGE_PORT}/health")
     
     app.run(host='0.0.0.0', port=BRIDGE_PORT, debug=True)
