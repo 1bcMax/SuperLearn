@@ -74,21 +74,52 @@ interface StepData {
   status: "pending" | "active" | "completed"
 }
 
-export function LearningFlow() {
-  const [currentStep, setCurrentStep] = useState<LearningStep>("registration")
-  const [email, setEmail] = useState("")
-  const [name, setName] = useState("")
+interface LearningFlowProps {
+  onSwitchToAIChat?: () => void
+  // Persistent state props
+  currentStep: LearningStep
+  setCurrentStep: (step: LearningStep) => void
+  completedSteps: Set<LearningStep>
+  setCompletedSteps: (steps: Set<LearningStep>) => void
+  email: string
+  setEmail: (email: string) => void
+  name: string
+  setName: (name: string) => void
+  quizScore: number
+  setQuizScore: (score: number) => void
+  currentQuizQuestion: number
+  setCurrentQuizQuestion: (question: number) => void
+  quizCompleted: boolean
+  setQuizCompleted: (completed: boolean) => void
+  nftMinted: boolean
+  setNftMinted: (minted: boolean) => void
+}
+
+export function LearningFlow({ 
+  onSwitchToAIChat,
+  currentStep,
+  setCurrentStep,
+  completedSteps,
+  setCompletedSteps,
+  email,
+  setEmail,
+  name,
+  setName,
+  quizScore,
+  setQuizScore,
+  currentQuizQuestion,
+  setCurrentQuizQuestion,
+  quizCompleted,
+  setQuizCompleted,
+  nftMinted,
+  setNftMinted
+}: LearningFlowProps) {
   const [isLoading, setIsLoading] = useState(false)
   const [walletAddress, setWalletAddress] = useState("")
   const [transactionHash, setTransactionHash] = useState("")
-  const [nftMinted, setNftMinted] = useState(false)
   const [walletCreating, setWalletCreating] = useState(false)
   const [activeModal, setActiveModal] = useState<string | null>(null)
-  const [completedSteps, setCompletedSteps] = useState<Set<LearningStep>>(new Set())
-  const [currentQuizQuestion, setCurrentQuizQuestion] = useState(0)
-  const [quizScore, setQuizScore] = useState(0)
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null)
-  const [quizCompleted, setQuizCompleted] = useState(false)
 
   const { ready, authenticated, user, primaryWallet, login } = usePrivyAuth()
   
@@ -197,7 +228,7 @@ export function LearningFlow() {
   }, [authenticated, primaryWallet, currentStep])
 
   const completeStep = (step: LearningStep) => {
-    setCompletedSteps((prev) => new Set([...prev, step]))
+    setCompletedSteps(new Set([...completedSteps, step]))
   }
 
   const handleRegistration = async () => {
@@ -218,21 +249,20 @@ export function LearningFlow() {
 
   const handleWalletCreation = () => {
     console.log("[SuperLearn] Wallet creation button clicked")
-    console.log("[SuperLearn] setShowAuthFlow available:", typeof setShowAuthFlow)
     setWalletCreating(true)
-    try {
-      setShowAuthFlow(true)
-      console.log("[SuperLearn] setShowAuthFlow(true) called successfully")
-    } catch (error) {
-      console.error("[SuperLearn] Error calling setShowAuthFlow:", error)
-    }
+    login()
   }
 
   const handleAIIntro = () => {
-    // Redirect to AI chat tab instead of modal
+    // Switch to AI chat tab and mark step as complete
     completeStep("ai-intro")
     setCurrentStep("quiz")
-    // We'll trigger the AI chat tab switch via props or callback
+    setActiveModal(null)
+    
+    // Switch to AI chat tab
+    if (onSwitchToAIChat) {
+      onSwitchToAIChat()
+    }
   }
 
   const handleQuizAnswer = (answerIndex: number) => {
@@ -242,11 +272,11 @@ export function LearningFlow() {
   const handleNextQuestion = () => {
     if (selectedAnswer !== null) {
       if (selectedAnswer === quizQuestions[currentQuizQuestion].correct) {
-        setQuizScore(prev => prev + 1)
+        setQuizScore(quizScore + 1)
       }
       
       if (currentQuizQuestion < quizQuestions.length - 1) {
-        setCurrentQuizQuestion(prev => prev + 1)
+        setCurrentQuizQuestion(currentQuizQuestion + 1)
         setSelectedAnswer(null)
       } else {
         // Quiz completed
@@ -531,10 +561,10 @@ export function LearningFlow() {
               </div>
 
               <div className="space-y-4">
-                <h3 className="font-semibold text-lg text-purple-800">Ready to Learn Crypto? 🤖✨</h3>
+                <h3 className="font-semibold text-lg text-purple-800">Time to Learn with AI! 🤖✨</h3>
                 <div className="text-left space-y-3 bg-gradient-to-r from-purple-100 to-pink-100 p-4 rounded-lg border-2 border-purple-200">
                   <p className="text-sm font-medium text-purple-800">
-                    🌟 <strong>Click "AI Agent Chat" tab above to:</strong> 🌟
+                    🌟 <strong>You'll be taken to the AI chat where you can:</strong> 🌟
                   </p>
                   <ul className="text-sm space-y-1 text-purple-700">
                     <li>🪙 Ask questions about cryptocurrency</li>
@@ -549,7 +579,7 @@ export function LearningFlow() {
                   size="lg"
                   className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white shadow-lg transform hover:scale-105 transition-all"
                 >
-                  ✅ I'm Ready for the Quiz!
+                  🚀 Start Chatting with AI Mentor!
                 </Button>
               </div>
             </div>

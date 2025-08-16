@@ -6,6 +6,8 @@ import { LearningFlow } from "@/components/learning-flow"
 import { AIAgentChat } from "@/components/ai-agent-chat"
 import { usePrivy, useWallets } from '@privy-io/react-auth'
 
+type LearningStep = "registration" | "wallet" | "ai-intro" | "quiz" | "nft-reward"
+
 // Privy Debug Widget
 const PrivyDebugWidget = () => {
   const { ready, authenticated, user, login, logout } = usePrivy()
@@ -79,6 +81,16 @@ function ErrorFallback({ error }: { error: Error }) {
 
 export default function HomePage() {
   const [currentView, setCurrentView] = useState<'learning' | 'ai-chat'>('learning')
+  
+  // Persistent learning flow state
+  const [currentStep, setCurrentStep] = useState<LearningStep>("registration")
+  const [completedSteps, setCompletedSteps] = useState<Set<LearningStep>>(new Set())
+  const [email, setEmail] = useState("")
+  const [name, setName] = useState("")
+  const [quizScore, setQuizScore] = useState(0)
+  const [currentQuizQuestion, setCurrentQuizQuestion] = useState(0)
+  const [quizCompleted, setQuizCompleted] = useState(false)
+  const [nftMinted, setNftMinted] = useState(false)
 
   return (
     <ErrorBoundary FallbackComponent={ErrorFallback}>
@@ -112,7 +124,26 @@ export default function HomePage() {
           </div>
           
           {currentView === 'learning' ? (
-            <LearningFlow onSwitchToAIChat={() => setCurrentView('ai-chat')} />
+            <LearningFlow 
+              onSwitchToAIChat={() => setCurrentView('ai-chat')}
+              // Pass persistent state
+              currentStep={currentStep}
+              setCurrentStep={setCurrentStep}
+              completedSteps={completedSteps}
+              setCompletedSteps={setCompletedSteps}
+              email={email}
+              setEmail={setEmail}
+              name={name}
+              setName={setName}
+              quizScore={quizScore}
+              setQuizScore={setQuizScore}
+              currentQuizQuestion={currentQuizQuestion}
+              setCurrentQuizQuestion={setCurrentQuizQuestion}
+              quizCompleted={quizCompleted}
+              setQuizCompleted={setQuizCompleted}
+              nftMinted={nftMinted}
+              setNftMinted={setNftMinted}
+            />
           ) : (
             <AIAgentChat />
           )}
