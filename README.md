@@ -1,8 +1,4 @@
 # SuperLearn: Kids Learn Crypto Tech with AI Mentor
-
-
-
-
 ## Project Overview
 
 SuperLearn is a **Web3-native educational platform** that empowers kids to learn cryptocurrency and blockchain technology through hands-on experience with an AI mentor. By combining **Dynamic's embedded wallet infrastructure**, **Fetch.ai's intelligent uAgents**, and **Flow's innovative Actions framework (FLIP-338)**, we create the first platform where children can safely learn crypto skills through guided, real on-chain interactions.
