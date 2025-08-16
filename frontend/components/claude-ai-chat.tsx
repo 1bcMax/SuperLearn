@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useRef, useEffect } from "react"
-import { usePrivy } from '@privy-io/react-auth'
+import { useDynamicContext } from './providers'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
@@ -48,7 +48,7 @@ export function ClaudeAIChat({ childName = "there" }: ClaudeAIChatProps) {
   const [inputValue, setInputValue] = useState("")
   const [isTyping, setIsTyping] = useState(false)
   const scrollAreaRef = useRef<HTMLDivElement>(null)
-  const { authenticated } = usePrivy()
+  const { isAuthenticated } = useDynamicContext()
 
   const scrollToBottom = () => {
     if (scrollAreaRef.current) {

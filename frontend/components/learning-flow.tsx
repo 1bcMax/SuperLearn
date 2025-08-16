@@ -8,42 +8,39 @@ import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { CheckCircle, Wallet, Brain, Trophy, ArrowRight, Loader2, ArrowDown, Zap, Target, Award } from "lucide-react"
-import { usePrivy, useWallets } from '@privy-io/react-auth'
+import { useDynamicContext, useUserWallets } from './providers'
 // Simplified demo version - no Flow blockchain dependencies
 
-// Privy authentication hook
-const usePrivyAuth = () => {
-  const { ready, authenticated, user, login, logout } = usePrivy()
-  const { wallets } = useWallets()
+// Dynamic authentication hook
+const useDynamicAuth = () => {
+  const { isAuthenticated, user, primaryWallet, setShowAuthFlow, handleLogOut } = useDynamicContext()
+  const wallets = useUserWallets()
   
-  const primaryWallet = wallets.length > 0 ? wallets[0] : null
-  
-  console.log("[Privy] Auth state:", {
-    ready,
-    authenticated,
-    user: user?.email?.address,
+  console.log("[Dynamic] Auth state:", {
+    isAuthenticated,
+    user: user?.email,
     walletCount: wallets.length
-    })
+  })
     
-    return {
-      ready,
-      authenticated,
-      user,
-      primaryWallet,
-      login,
-      logout
-    }
+  return {
+    ready: true, // Dynamic is always ready
+    authenticated: isAuthenticated,
+    user,
+    primaryWallet,
+    login: () => setShowAuthFlow(true),
+    logout: handleLogOut
+  }
 }
 
-// Privy Login Button Component
-const PrivyLoginButton = () => {
-  const { ready, authenticated, login } = usePrivy()
+// Dynamic Login Button Component
+const DynamicLoginButton = () => {
+  const { ready, authenticated, login } = useDynamicAuth()
   
   if (!ready) {
     return (
       <Button disabled className="w-full">
         <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-        Loading Privy...
+        Loading Dynamic...
       </Button>
     )
   }
@@ -60,7 +57,7 @@ const PrivyLoginButton = () => {
   return (
     <Button onClick={login} className="w-full">
       <Wallet className="w-4 h-4 mr-2" />
-      Connect Wallet with Privy
+      Connect Ethereum & Flow Wallet
     </Button>
   )
 }
@@ -125,7 +122,7 @@ export function LearningFlow({
   const [demoNftMinting, setDemoNftMinting] = useState(false);
 
 
-  const { ready, authenticated, user, primaryWallet, login } = usePrivyAuth()
+  const { ready, authenticated, user, primaryWallet, login } = useDynamicAuth()
   
   // Quiz questions data
   const quizQuestions = [
@@ -166,10 +163,10 @@ export function LearningFlow({
   
   // Debug the context
   useEffect(() => {
-    console.log("[SuperLearn] Privy auth state:", {
+    console.log("[SuperLearn] Dynamic auth state:", {
       ready,
       authenticated,
-      user: user?.email?.address,
+      user: user?.email,
       wallet: primaryWallet?.address
     })
   }, [ready, authenticated, user, primaryWallet])
@@ -185,7 +182,7 @@ export function LearningFlow({
     {
       id: "wallet",
       title: "Create Wallet",
-      description: "Privy embedded wallet",
+      description: "Ethereum & Flow EVM wallet",
       icon: Wallet,
       status: currentStep === "wallet" ? "active" : completedSteps.has("wallet") ? "completed" : "pending",
     },
@@ -510,10 +507,10 @@ export function LearningFlow({
           <DialogContent className="bg-gradient-to-br from-blue-50 to-cyan-50 border-2 border-blue-200">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2 text-blue-800">
-                <Wallet className="w-5 h-5 text-cyan-500" />💎 Create Your Crypto Wallet 💎
+                <Wallet className="w-5 h-5 text-cyan-500" />💎 Create Your Ethereum & Flow Wallet 💎
               </DialogTitle>
               <DialogDescription className="text-blue-600">
-                We'll create a secure magical wallet for you using Privy's technology! ✨
+                We'll create a secure wallet that works with both Ethereum and Flow EVM networks! ✨
               </DialogDescription>
             </DialogHeader>
             <div className="text-center space-y-6">
@@ -524,10 +521,9 @@ export function LearningFlow({
               {!authenticated && !walletCreating ? (
                 <div className="space-y-4">
                   <p className="text-blue-700">
-                    🌟 Your wallet will be created automatically and secured with your email. No complicated stuff to
-                    remember! 🌟
+                    🌟 Your multi-chain wallet supports both Ethereum and Flow EVM networks. It will be secured with your email - no complicated stuff to remember! 🌟
                   </p>
-                  <PrivyLoginButton />
+                  <DynamicLoginButton />
                 </div>
               ) : walletCreating ? (
                 <div className="space-y-4">
