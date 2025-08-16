@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { usePrivy, useWallets } from '@privy-io/react-auth'
+import { useDynamicContext, useUserWallets } from './providers'
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -16,9 +16,9 @@ interface WalletWidgetProps {
 }
 
 export function WalletWidget({ onWalletConnected, showBalance = true, className }: WalletWidgetProps) {
-  const { ready, authenticated, user, login } = usePrivy()
-  const { wallets } = useWallets()
-  const primaryWallet = wallets.length > 0 ? wallets[0] : null
+  const { isAuthenticated, user, primaryWallet, setShowAuthFlow } = useDynamicContext()
+  const wallets = useUserWallets()
+  const ready = true // Dynamic is always ready
   const [showAddress, setShowAddress] = useState(false)
   const [copied, setCopied] = useState(false)
 
@@ -27,7 +27,7 @@ export function WalletWidget({ onWalletConnected, showBalance = true, className 
   const mockTestTokens = "100"
 
   const handleConnect = () => {
-    login()
+    setShowAuthFlow(true)
     if (onWalletConnected) {
       // Simulate connection success
       setTimeout(() => onWalletConnected(), 2000)
@@ -62,16 +62,16 @@ export function WalletWidget({ onWalletConnected, showBalance = true, className 
     )
   }
 
-  if (!authenticated) {
+  if (!isAuthenticated) {
     return (
       <Card className={cn("border-border", className)}>
         <CardHeader className="text-center">
           <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
             <Wallet className="w-8 h-8 text-primary" />
           </div>
-          <CardTitle className="font-heading text-xl">Get Your Crypto Wallet</CardTitle>
+          <CardTitle className="font-heading text-xl">Get Your Ethereum & Flow Wallet</CardTitle>
           <CardDescription>
-            Create your safe practice wallet to start learning with real blockchain transactions!
+            Create your safe multi-chain wallet to start learning with real blockchain transactions on Ethereum and Flow EVM!
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -97,12 +97,12 @@ export function WalletWidget({ onWalletConnected, showBalance = true, className 
               </AvatarFallback>
             </Avatar>
             <div>
-              <CardTitle className="font-heading text-lg">My Learning Wallet</CardTitle>
+              <CardTitle className="font-heading text-lg">My Multi-Chain Wallet</CardTitle>
               <CardDescription className="flex items-center gap-2">
                 <Badge variant="secondary" className="bg-green-100 text-green-700 text-xs">
                   Connected
                 </Badge>
-                <span className="text-xs">Test Network</span>
+                <span className="text-xs">Ethereum & Flow EVM</span>
               </CardDescription>
             </div>
           </div>
@@ -150,19 +150,19 @@ export function WalletWidget({ onWalletConnected, showBalance = true, className 
               <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
                 <div className="flex items-center gap-2 mb-1">
                   <Coins className="w-4 h-4 text-blue-600" />
-                  <span className="text-xs font-medium text-blue-700">ETH (Test)</span>
+                  <span className="text-xs font-medium text-blue-700">ETH (Testnet)</span>
                 </div>
                 <p className="text-lg font-bold text-blue-900">{mockBalance}</p>
-                <p className="text-xs text-blue-600">Practice Ethereum</p>
+                <p className="text-xs text-blue-600">Ethereum Mainnet</p>
               </div>
 
-              <div className="p-3 bg-purple-50 rounded-lg border border-purple-200">
+              <div className="p-3 bg-emerald-50 rounded-lg border border-emerald-200">
                 <div className="flex items-center gap-2 mb-1">
-                  <Coins className="w-4 h-4 text-purple-600" />
-                  <span className="text-xs font-medium text-purple-700">LEARN</span>
+                  <Coins className="w-4 h-4 text-emerald-600" />
+                  <span className="text-xs font-medium text-emerald-700">ETH (Flow)</span>
                 </div>
-                <p className="text-lg font-bold text-purple-900">{mockTestTokens}</p>
-                <p className="text-xs text-purple-600">Learning Tokens</p>
+                <p className="text-lg font-bold text-emerald-900">{mockTestTokens}</p>
+                <p className="text-xs text-emerald-600">Flow EVM Testnet</p>
               </div>
             </div>
           </div>
@@ -185,7 +185,7 @@ export function WalletWidget({ onWalletConnected, showBalance = true, className 
 
         <div className="pt-2 border-t border-border">
           <p className="text-xs text-muted-foreground text-center">
-            All transactions are on test networks for safe learning
+            Multi-chain support: Ethereum Mainnet & Flow EVM Testnet
           </p>
         </div>
       </CardContent>
