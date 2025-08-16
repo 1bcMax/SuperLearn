@@ -5,6 +5,7 @@ import { ErrorBoundary } from "react-error-boundary"
 import { LearningFlow } from "@/components/learning-flow"
 import { AIAgentChat } from "@/components/ai-agent-chat"
 import { DynamicWidget, useDynamicContext } from "@dynamic-labs/sdk-react-core"
+import { isEthereumWallet } from "@dynamic-labs/ethereum"
 
 type LearningStep = "registration" | "wallet" | "ai-intro" | "quiz" | "nft-reward"
 
@@ -42,11 +43,11 @@ const DynamicDebugWidget = () => {
           </button>
           <div className="text-xs space-y-1">
             <p>✅ User: {user?.email && 'Connected'}</p>
-            {primaryWallet && (
+            {primaryWallet && isEthereumWallet(primaryWallet) && (
               <>
                 <p>💰 Wallet: {primaryWallet.address?.slice(0, 8)}...</p>
-                <p>🔗 Type: {primaryWallet.walletClientType}</p>
-                <p>🌐 Chain: {primaryWallet.chainId || 'Unknown'}</p>
+                <p>🔗 Type: {primaryWallet.connector.isEmbeddedWallet ? 'Embedded' : 'External'}</p>
+                <p>🌐 Chain: {primaryWallet.chain || 'Unknown'}</p>
               </>
             )}
           </div>

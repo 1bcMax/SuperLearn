@@ -377,24 +377,87 @@ export function LearningFlow({
     "nft-reward": 100,
   }
 
+  // Reset to step 1 when user logs out
+  useEffect(() => {
+    if (sdkHasLoaded && !authenticated) {
+      // User is logged out - reset everything
+      setCurrentStep("registration")
+      setCompletedSteps(new Set())
+      setActiveModal(null)
+      setWalletAddress("")
+      setWalletCreating(false)
+    }
+  }, [sdkHasLoaded, authenticated])
+
+  // Initialize correct step based on user state on page load
+  useEffect(() => {
+    if (sdkHasLoaded) {
+      if (authenticated && user?.alias) {
+        // User is authenticated
+        completeStep("registration")
+        
+        if (primaryWallet) {
+          // User has a wallet - skip to link-wallet step
+          completeStep("wallet")
+          if (currentStep === "registration" || currentStep === "wallet") {
+            setCurrentStep("link-wallet")
+          }
+        } else {
+          // User authenticated but no wallet - go to wallet step
+          if (currentStep === "registration") {
+            setCurrentStep("wallet")
+          }
+        }
+      }
+    }
+  }, [sdkHasLoaded, authenticated, user?.alias, primaryWallet])
+
   // Handle authentication completion - progress from registration to wallet step
   useEffect(() => {
     if (authenticated && user?.alias && currentStep === "registration") {
       completeStep("registration")
-      setCurrentStep("wallet")
+      
+      // If user already has a primary wallet, skip to link-wallet step
+      if (primaryWallet) {
+        completeStep("wallet")
+        setCurrentStep("link-wallet")
+      } else {
+        setCurrentStep("wallet")
+      }
+      
       setActiveModal(null) // Close the registration modal
     }
-  }, [authenticated, user?.alias, currentStep])
+  }, [authenticated, user?.alias, currentStep, primaryWallet])
 
   // Handle wallet creation completion - progress from wallet to link-wallet step
   useEffect(() => {
     if (authenticated && primaryWallet && currentStep === "wallet" && walletCreating) {
-      setWalletAddress(primaryWallet.address)
-      setWalletCreating(false)
-      completeStep("wallet")
-      setTimeout(() => {
-        setCurrentStep("link-wallet")
-      }, 1000)
+      const handleWalletCompletion = async () => {
+        setWalletAddress(primaryWallet.address)
+        setWalletCreating(false)
+        
+        // Switch to network 545 after wallet creation (if not already on it)
+        try {
+          const currentNetwork = await primaryWallet.getNetwork()
+          console.log("[SuperLearn] Current network:", currentNetwork)
+          
+          if (currentNetwork !== 545) {
+            await primaryWallet.connector.switchNetwork(545)
+            console.log("[SuperLearn] Switched to network 545")
+          } else {
+            console.log("[SuperLearn] Already on network 545")
+          }
+        } catch (error) {
+          console.error("[SuperLearn] Failed to check/switch network:", error)
+        }
+        
+        completeStep("wallet")
+        setTimeout(() => {
+          setCurrentStep("link-wallet")
+        }, 1000)
+      }
+      
+      handleWalletCompletion()
     }
   }, [authenticated, primaryWallet, currentStep, walletCreating])
 
