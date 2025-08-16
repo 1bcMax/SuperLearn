@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -45,11 +45,6 @@ export function AIAgentChat() {
   const [learningStyle, setLearningStyle] = useState('Visual')
   const [agentStatus, setAgentStatus] = useState<'online' | 'offline' | 'unknown'>('unknown')
 
-  // Check agent status on component mount
-  useState(() => {
-    checkAgentStatus()
-  })
-
   const checkAgentStatus = async () => {
     try {
       const response = await fetch('http://localhost:8001/agent-status')
@@ -59,6 +54,11 @@ export function AIAgentChat() {
       setAgentStatus('offline')
     }
   }
+
+  // Check agent status on component mount
+  useEffect(() => {
+    checkAgentStatus()
+  }, [])
 
   const addMessage = (content: string, type: 'user' | 'agent') => {
     const newMessage: Message = {

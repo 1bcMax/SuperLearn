@@ -1,29 +1,7 @@
 "use client"
 
 import { useState } from "react"
-// Safe Dynamic context hook that falls back gracefully
-const useSafeDynamicContext = () => {
-  try {
-    const { useDynamicContext } = require("@dynamic-labs/sdk-react-core")
-    return useDynamicContext()
-  } catch (error) {
-    console.log("[v0] Using fallback Dynamic context in wallet widget")
-    return {
-      setShowAuthFlow: () => {},
-      primaryWallet: null,
-      user: null,
-    }
-  }
-}
-
-const useSafeIsLoggedIn = () => {
-  try {
-    const { useIsLoggedIn } = require("@dynamic-labs/sdk-react-core")
-    return useIsLoggedIn()
-  } catch (error) {
-    return false
-  }
-}
+import { usePrivy, useWallets } from '@privy-io/react-auth'
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -38,8 +16,9 @@ interface WalletWidgetProps {
 }
 
 export function WalletWidget({ onWalletConnected, showBalance = true, className }: WalletWidgetProps) {
-  const { setShowAuthFlow, primaryWallet, user } = useSafeDynamicContext()
-  const isLoggedIn = useSafeIsLoggedIn()
+  const { ready, authenticated, user, login } = usePrivy()
+  const { wallets } = useWallets()
+  const primaryWallet = wallets.length > 0 ? wallets[0] : null
   const [showAddress, setShowAddress] = useState(false)
   const [copied, setCopied] = useState(false)
 
@@ -48,7 +27,7 @@ export function WalletWidget({ onWalletConnected, showBalance = true, className 
   const mockTestTokens = "100"
 
   const handleConnect = () => {
-    setShowAuthFlow(true)
+    login()
     if (onWalletConnected) {
       // Simulate connection success
       setTimeout(() => onWalletConnected(), 2000)
@@ -67,7 +46,23 @@ export function WalletWidget({ onWalletConnected, showBalance = true, className 
     return `${address.slice(0, 6)}...${address.slice(-4)}`
   }
 
-  if (!isLoggedIn) {
+  if (!ready) {
+    return (
+      <Card className={cn("border-border", className)}>
+        <CardHeader className="text-center">
+          <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+            <Wallet className="w-8 h-8 text-primary" />
+          </div>
+          <CardTitle className="font-heading text-xl">Loading...</CardTitle>
+          <CardDescription>
+            Preparing your wallet connection...
+          </CardDescription>
+        </CardHeader>
+      </Card>
+    )
+  }
+
+  if (!authenticated) {
     return (
       <Card className={cn("border-border", className)}>
         <CardHeader className="text-center">

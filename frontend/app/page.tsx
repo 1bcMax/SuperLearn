@@ -1,61 +1,63 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { ErrorBoundary } from "react-error-boundary"
 import { LearningFlow } from "@/components/learning-flow"
 import { AIAgentChat } from "@/components/ai-agent-chat"
+import { usePrivy, useWallets } from '@privy-io/react-auth'
 
-// Dynamic Debug Widget with safer imports
-const DynamicDebugWidget = () => {
-  const [dynamicLoaded, setDynamicLoaded] = useState(false)
-  const [components, setComponents] = useState<any>(null)
+// Privy Debug Widget
+const PrivyDebugWidget = () => {
+  const { ready, authenticated, user, login, logout } = usePrivy()
+  const { wallets } = useWallets()
+  const primaryWallet = wallets.length > 0 ? wallets[0] : null
 
-  useEffect(() => {
-    const loadComponents = async () => {
-      try {
-        const core = await import("@dynamic-labs/sdk-react-core")
-        setComponents({ 
-          DynamicWidget: core.DynamicWidget, 
-          useDynamicContext: core.useDynamicContext 
-        })
-        setDynamicLoaded(true)
-      } catch (error) {
-        console.log("[Debug] Dynamic components failed to load:", error)
-      }
-    }
-    loadComponents()
-  }, [])
-
-  if (!dynamicLoaded || !components) {
+  if (!ready) {
     return (
       <div className="fixed top-4 right-4 z-50 bg-yellow-100 p-2 rounded text-xs border">
-        🔄 Loading Dynamic...
+        🔄 Loading Privy...
       </div>
     )
   }
 
-  const DebugComponent = () => {
-    const { user, primaryWallet, isAuthenticated } = components.useDynamicContext()
-    return (
-      <div className="fixed top-4 right-4 z-50 bg-white p-4 rounded-lg shadow-lg border max-w-sm">
-        <h3 className="font-bold text-sm mb-2">🐛 Multi-Chain Debug</h3>
-        <components.DynamicWidget />
-        {isAuthenticated && (
-          <div className="mt-2 text-xs space-y-1">
-            <p>✅ User: {user?.email || user?.userId}</p>
-            <p>💰 Wallet: {primaryWallet?.address?.slice(0, 8)}...</p>
-            <p>🔗 Chain: {primaryWallet?.chain || 'Unknown'}</p>
-            <p>🌐 Network: {primaryWallet?.network || 'Unknown'}</p>
+  return (
+    <div className="fixed top-4 right-4 z-50 bg-white p-4 rounded-lg shadow-lg border max-w-sm">
+      <h3 className="font-bold text-sm mb-2">🐛 Privy Debug</h3>
+      
+      {!authenticated ? (
+        <button 
+          onClick={login}
+          className="w-full px-3 py-2 bg-blue-500 text-white rounded text-sm hover:bg-blue-600"
+        >
+          Connect with Privy
+        </button>
+      ) : (
+        <div className="space-y-2">
+          <button 
+            onClick={logout}
+            className="w-full px-3 py-2 bg-red-500 text-white rounded text-sm hover:bg-red-600"
+          >
+            Disconnect
+          </button>
+          <div className="text-xs space-y-1">
+            <p>✅ User: {user?.email?.address || user?.phone?.number || 'Connected'}</p>
+            {primaryWallet && (
+              <>
+                <p>💰 Wallet: {primaryWallet.address?.slice(0, 8)}...</p>
+                <p>🔗 Type: {primaryWallet.walletClientType}</p>
+                <p>🌐 Chain: {primaryWallet.chainId || 'Unknown'}</p>
+              </>
+            )}
           </div>
-        )}
-        <div className="mt-2 text-xs text-gray-500">
-          <p>🌍 Supported: Ethereum + Flow</p>
         </div>
+      )}
+      
+      <div className="mt-2 text-xs text-gray-500">
+        <p>🌍 Supported: Ethereum Mainnet + Sepolia</p>
+        <p>📧 Login: Email, SMS, Wallet</p>
       </div>
-    )
-  }
-
-  return <DebugComponent />
+    </div>
+  )
 }
 
 function ErrorFallback({ error }: { error: Error }) {
@@ -80,7 +82,7 @@ export default function HomePage() {
 
   return (
     <ErrorBoundary FallbackComponent={ErrorFallback}>
-      <DynamicDebugWidget />
+      <PrivyDebugWidget />
       
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
         <div className="max-w-6xl mx-auto">
@@ -109,7 +111,11 @@ export default function HomePage() {
             </div>
           </div>
           
-          {currentView === 'learning' ? <LearningFlow /> : <AIAgentChat />}
+          {currentView === 'learning' ? (
+            <LearningFlow onSwitchToAIChat={() => setCurrentView('ai-chat')} />
+          ) : (
+            <AIAgentChat />
+          )}
         </div>
       </div>
     </ErrorBoundary>

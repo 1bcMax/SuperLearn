@@ -8,137 +8,63 @@ import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { CheckCircle, Wallet, Brain, Trophy, ArrowRight, Loader2, ArrowDown, Zap, Target, Award } from "lucide-react"
-import {  primaryWallet } from "@dynamic-labs/sdk-react-core";
+import { usePrivy, useWallets } from '@privy-io/react-auth'
 
-// Fallback hook when Dynamic is not available
-const useDynamicContextFallback = () => {
-  const [mockWallet, setMockWallet] = useState<any>(null)
-  const [mockAuthenticated, setMockAuthenticated] = useState(false)
-
-  const setShowAuthFlow = React.useCallback((show?: boolean) => {
-    console.log("[Fallback] setShowAuthFlow called with:", show)
-    if (show) {
-      console.log("[Fallback] Starting mock authentication...")
-      setTimeout(() => {
-        const mockAddress = "0x" + Math.random().toString(16).substr(2, 40)
-        setMockWallet({ address: mockAddress })
-        setMockAuthenticated(true)
-        console.log("[Fallback] Mock authentication completed:", mockAddress)
-      }, 2000)
-    }
-  }, [])
-
-  return React.useMemo(() => ({
-    setShowAuthFlow,
-    isAuthenticated: mockAuthenticated,
-    user: mockAuthenticated ? { email: "user@example.com" } : null,
-    primaryWallet: mockWallet,
-  }), [setShowAuthFlow, mockAuthenticated, mockWallet])
-}
-
-// Safe Dynamic context hook that uses the provider's context
-const useSafeDynamicContext = () => {
-  const fallbackContext = useDynamicContextFallback()
+// Privy authentication hook
+const usePrivyAuth = () => {
+  const { ready, authenticated, user, login, logout } = usePrivy()
+  const { wallets } = useWallets()
   
-  // Try to get the real Dynamic context from the provider
-  try {
-    const { useDynamicContext } = require("@dynamic-labs/sdk-react-core")
-    const realContext = useDynamicContext()
-    
-    console.log("[Dynamic] Using real context:", {
-      isAuthenticated: realContext.isAuthenticated,
-      user: realContext.user?.email,
-      hasSetShowAuthFlow: typeof realContext.setShowAuthFlow === 'function'
+  const primaryWallet = wallets.length > 0 ? wallets[0] : null
+  
+  console.log("[Privy] Auth state:", {
+    ready,
+    authenticated,
+    user: user?.email?.address,
+    walletCount: wallets.length
     })
     
-    return realContext
-  } catch (error) {
-    console.log("[Dynamic] Using fallback context:", error.message)
-    return fallbackContext
-  }
+    return {
+      ready,
+      authenticated,
+      user,
+      primaryWallet,
+      login,
+      logout
+    }
 }
 
-// Safe Dynamic Widget that checks for the loaded widget
-const SafeDynamicWidget = () => {
-  const [widgetReady, setWidgetReady] = useState(false)
-  const [checkingWidget, setCheckingWidget] = useState(true)
-
-  useEffect(() => {
-    const checkWidget = () => {
-      // Check if the global Dynamic components are loaded
-      if (typeof window !== 'undefined' && (window as any).DynamicWidget) {
-        console.log("[SafeDynamicWidget] Global DynamicWidget found")
-        setWidgetReady(true)
-        setCheckingWidget(false)
-      } else {
-        // Try to import the widget
-        import("@dynamic-labs/sdk-react-core")
-          .then((module) => {
-            if (module.DynamicWidget) {
-              console.log("[SafeDynamicWidget] DynamicWidget imported successfully")
-              setWidgetReady(true)
-            } else {
-              console.log("[SafeDynamicWidget] DynamicWidget not in module")
-              setWidgetReady(false)
-            }
-            setCheckingWidget(false)
-          })
-          .catch((error) => {
-            console.log("[SafeDynamicWidget] Import failed:", error.message)
-            setWidgetReady(false)
-            setCheckingWidget(false)
-          })
-      }
-    }
-
-    checkWidget()
-  }, [])
-
-  const handleFallbackClick = () => {
-    console.log("[SafeDynamicWidget] Fallback button clicked")
-    alert("🎯 This button works! Dynamic SDK not loaded, but the click handler is working. In a real setup, this would open the Dynamic authentication flow.")
-  }
-
-  if (checkingWidget) {
+// Privy Login Button Component
+const PrivyLoginButton = () => {
+  const { ready, authenticated, login } = usePrivy()
+  
+  if (!ready) {
     return (
-      <Button disabled className="w-full bg-gradient-to-r from-blue-500 to-cyan-500 text-white shadow-lg">
-        🔄 Loading Widget...
+      <Button disabled className="w-full">
+        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+        Loading Privy...
       </Button>
     )
   }
-
-  if (widgetReady) {
-    // Use dynamic import for the widget
-    const DynamicWidgetComponent = React.lazy(() => 
-      import("@dynamic-labs/sdk-react-core").then(module => ({ 
-        default: module.DynamicWidget 
-      }))
-    )
-
+  
+  if (authenticated) {
     return (
-      <div className="space-y-2">
-        <React.Suspense fallback={<Button disabled className="w-full bg-gradient-to-r from-blue-500 to-cyan-500 text-white shadow-lg">🔄 Loading...</Button>}>
-          <DynamicWidgetComponent />
-        </React.Suspense>
-        <p className="text-xs text-green-600 text-center">✅ Dynamic widget loaded</p>
-      </div>
+      <Button disabled className="w-full bg-green-500">
+        <CheckCircle className="w-4 h-4 mr-2" />
+        Wallet Connected
+      </Button>
     )
   }
-
+  
   return (
-    <div className="space-y-2">
-      <Button 
-        onClick={handleFallbackClick}
-        className="w-full bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white shadow-lg transform hover:scale-105 transition-all"
-      >
-        ✨ Create My Magical Wallet ✨
-      </Button>
-      <p className="text-xs text-red-600 text-center">⚠️ Dynamic SDK not loaded</p>
-    </div>
+    <Button onClick={login} className="w-full">
+      <Wallet className="w-4 h-4 mr-2" />
+      Connect Wallet with Privy
+    </Button>
   )
 }
 
-type LearningStep = "registration" | "wallet" | "ai-intro" | "practice" | "verification" | "achievement"
+type LearningStep = "registration" | "wallet" | "ai-intro" | "quiz" | "nft-reward"
 
 interface StepData {
   id: LearningStep
@@ -159,18 +85,59 @@ export function LearningFlow() {
   const [walletCreating, setWalletCreating] = useState(false)
   const [activeModal, setActiveModal] = useState<string | null>(null)
   const [completedSteps, setCompletedSteps] = useState<Set<LearningStep>>(new Set())
+  const [currentQuizQuestion, setCurrentQuizQuestion] = useState(0)
+  const [quizScore, setQuizScore] = useState(0)
+  const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null)
+  const [quizCompleted, setQuizCompleted] = useState(false)
 
-  const { setShowAuthFlow, isAuthenticated, user, primaryWallet } = useSafeDynamicContext()
+  const { ready, authenticated, user, primaryWallet, login } = usePrivyAuth()
+  
+  // Quiz questions data
+  const quizQuestions = [
+    {
+      question: "What is a cryptocurrency wallet?",
+      options: [
+        "A physical wallet for coins",
+        "A digital tool to store and manage crypto",
+        "A type of cryptocurrency",
+        "A bank account"
+      ],
+      correct: 1,
+      explanation: "A cryptocurrency wallet is a digital tool that stores your private keys and allows you to manage your crypto assets."
+    },
+    {
+      question: "What does 'blockchain' mean?",
+      options: [
+        "A type of chain jewelry",
+        "A chain of connected data blocks",
+        "A block of ice",
+        "A computer chain"
+      ],
+      correct: 1,
+      explanation: "Blockchain is a chain of connected data blocks, where each block contains transaction data and is linked to the previous block."
+    },
+    {
+      question: "What is Ethereum?",
+      options: [
+        "A type of internet",
+        "A cryptocurrency only",
+        "A blockchain platform for smart contracts",
+        "A company name"
+      ],
+      correct: 2,
+      explanation: "Ethereum is a blockchain platform that supports smart contracts and decentralized applications, with ETH as its native cryptocurrency."
+    }
+  ]
   
   // Debug the context
   useEffect(() => {
-    console.log("[SuperLearn] Dynamic context state:", {
-      setShowAuthFlow: typeof setShowAuthFlow,
-      isAuthenticated,
-      user: user?.email || user?.userId,
+    console.log("[SuperLearn] Privy auth state:", {
+      ready,
+      authenticated,
+      user: user?.email?.address,
       wallet: primaryWallet?.address
     })
-  }, [setShowAuthFlow, isAuthenticated, user, primaryWallet])
+  }, [ready, authenticated, user, primaryWallet])
 
   const steps: StepData[] = [
     {
@@ -183,51 +150,43 @@ export function LearningFlow() {
     {
       id: "wallet",
       title: "Create Wallet",
-      description: "Dynamic embedded wallet",
+      description: "Privy embedded wallet",
       icon: Wallet,
       status: currentStep === "wallet" ? "active" : completedSteps.has("wallet") ? "completed" : "pending",
     },
     {
       id: "ai-intro",
-      title: "AI Introduction",
-      description: "Learn crypto concepts",
+      title: "AI Crypto Guide",
+      description: "Chat with AI mentor to learn",
       icon: Brain,
       status: currentStep === "ai-intro" ? "active" : completedSteps.has("ai-intro") ? "completed" : "pending",
     },
     {
-      id: "practice",
-      title: "First Transaction",
-      description: "Guided blockchain practice",
-      icon: Zap,
-      status: currentStep === "practice" ? "active" : completedSteps.has("practice") ? "completed" : "pending",
-    },
-    {
-      id: "verification",
-      title: "Verification",
-      description: "Flow Action confirms success",
+      id: "quiz",
+      title: "Crypto Quiz",
+      description: "Test your knowledge",
       icon: Target,
-      status: currentStep === "verification" ? "active" : completedSteps.has("verification") ? "completed" : "pending",
+      status: currentStep === "quiz" ? "active" : completedSteps.has("quiz") ? "completed" : "pending",
     },
     {
-      id: "achievement",
-      title: "NFT Certificate",
-      description: "Mint Crypto Explorer badge",
+      id: "nft-reward",
+      title: "Win NFT",
+      description: "Earn your crypto badge",
       icon: Award,
-      status: currentStep === "achievement" ? "active" : completedSteps.has("achievement") ? "completed" : "pending",
+      status: currentStep === "nft-reward" ? "active" : completedSteps.has("nft-reward") ? "completed" : "pending",
     },
   ]
 
   const stepProgress = {
-    registration: 16,
-    wallet: 33,
-    "ai-intro": 50,
-    practice: 66,
-    verification: 83,
-    achievement: 100,
+    registration: 20,
+    wallet: 40,
+    "ai-intro": 60,
+    quiz: 80,
+    "nft-reward": 100,
   }
 
   useEffect(() => {
-    if (isAuthenticated && primaryWallet && currentStep === "wallet") {
+    if (authenticated && primaryWallet && currentStep === "wallet") {
       setWalletAddress(primaryWallet.address)
       setWalletCreating(false)
       completeStep("wallet")
@@ -235,7 +194,7 @@ export function LearningFlow() {
         setCurrentStep("ai-intro")
       }, 1000)
     }
-  }, [isAuthenticated, primaryWallet, currentStep])
+  }, [authenticated, primaryWallet, currentStep])
 
   const completeStep = (step: LearningStep) => {
     setCompletedSteps((prev) => new Set([...prev, step]))
@@ -270,38 +229,64 @@ export function LearningFlow() {
   }
 
   const handleAIIntro = () => {
-    setIsLoading(true)
-    setTimeout(() => {
-      completeStep("ai-intro")
-      setCurrentStep("practice")
-      setIsLoading(false)
-      setActiveModal(null)
-    }, 2000)
+    // Redirect to AI chat tab instead of modal
+    completeStep("ai-intro")
+    setCurrentStep("quiz")
+    // We'll trigger the AI chat tab switch via props or callback
   }
 
-  const handlePracticeTransaction = async () => {
-    setIsLoading(true)
+  const handleQuizAnswer = (answerIndex: number) => {
+    setSelectedAnswer(answerIndex)
+  }
 
-    await new Promise((resolve) => setTimeout(resolve, 3000))
-    const mockTxHash = "0x" + Math.random().toString(16).substr(2, 40)
-    setTransactionHash(mockTxHash)
+  const handleNextQuestion = () => {
+    if (selectedAnswer !== null) {
+      if (selectedAnswer === quizQuestions[currentQuizQuestion].correct) {
+        setQuizScore(prev => prev + 1)
+      }
+      
+      if (currentQuizQuestion < quizQuestions.length - 1) {
+        setCurrentQuizQuestion(prev => prev + 1)
+        setSelectedAnswer(null)
+      } else {
+        // Quiz completed
+        const finalScore = selectedAnswer === quizQuestions[currentQuizQuestion].correct ? quizScore + 1 : quizScore
+        setQuizCompleted(true)
+        
+        // Need at least 2/3 correct to pass
+        if (finalScore >= 2) {
+          handleQuizCompletion(true)
+        } else {
+          handleQuizCompletion(false)
+        }
+      }
+    }
+  }
 
-    completeStep("practice")
-    setCurrentStep("verification")
-    setIsLoading(false)
-    setActiveModal(null)
+  const resetQuiz = () => {
+    setCurrentQuizQuestion(0)
+    setQuizScore(0)
+    setSelectedAnswer(null)
+    setQuizCompleted(false)
+  }
 
-    setTimeout(() => {
-      completeStep("verification")
-      setCurrentStep("achievement")
-    }, 2000)
+  const handleQuizCompletion = (passed: boolean) => {
+    if (passed) {
+      completeStep("quiz")
+      setCurrentStep("nft-reward")
+      setActiveModal("nft-reward")
+    } else {
+      // Allow retaking the quiz
+      resetQuiz()
+      setActiveModal("quiz")
+    }
   }
 
   const handleMintNFT = async () => {
     setIsLoading(true)
     await new Promise((resolve) => setTimeout(resolve, 3000))
     setNftMinted(true)
-    completeStep("achievement")
+    completeStep("nft-reward")
     setIsLoading(false)
     setActiveModal(null)
   }
@@ -486,7 +471,7 @@ export function LearningFlow() {
                 <Wallet className="w-5 h-5 text-cyan-500" />💎 Create Your Crypto Wallet 💎
               </DialogTitle>
               <DialogDescription className="text-blue-600">
-                We'll create a secure magical wallet for you using Dynamic's technology! ✨
+                We'll create a secure magical wallet for you using Privy's technology! ✨
               </DialogDescription>
             </DialogHeader>
             <div className="text-center space-y-6">
@@ -494,13 +479,13 @@ export function LearningFlow() {
                 <Wallet className="w-10 h-10 text-white" />
               </div>
 
-              {!isAuthenticated && !walletCreating ? (
+              {!authenticated && !walletCreating ? (
                 <div className="space-y-4">
                   <p className="text-blue-700">
                     🌟 Your wallet will be created automatically and secured with your email. No complicated stuff to
                     remember! 🌟
                   </p>
-                  <SafeDynamicWidget />
+                  <PrivyLoginButton />
                 </div>
               ) : walletCreating ? (
                 <div className="space-y-4">
@@ -534,10 +519,10 @@ export function LearningFlow() {
           <DialogContent className="bg-gradient-to-br from-purple-50 to-pink-50 border-2 border-purple-200">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2 text-purple-800">
-                <Brain className="w-5 h-5 text-pink-500" />🤖 Meet Your AI Mentor 🤖
+                <Brain className="w-5 h-5 text-pink-500" />🤖 Chat with AI Mentor 🤖
               </DialogTitle>
               <DialogDescription className="text-purple-600">
-                Learn essential crypto concepts with your personal magical AI guide! ✨
+                Learn crypto concepts by chatting with your AI guide! ✨
               </DialogDescription>
             </DialogHeader>
             <div className="text-center space-y-6">
@@ -546,88 +531,98 @@ export function LearningFlow() {
               </div>
 
               <div className="space-y-4">
-                <h3 className="font-semibold text-lg text-purple-800">Hi {name}! I'm Alex 🤖✨</h3>
+                <h3 className="font-semibold text-lg text-purple-800">Ready to Learn Crypto? 🤖✨</h3>
                 <div className="text-left space-y-3 bg-gradient-to-r from-purple-100 to-pink-100 p-4 rounded-lg border-2 border-purple-200">
                   <p className="text-sm font-medium text-purple-800">
-                    🌟 <strong>What magical things you'll learn:</strong> 🌟
+                    🌟 <strong>Click "AI Agent Chat" tab above to:</strong> 🌟
                   </p>
                   <ul className="text-sm space-y-1 text-purple-700">
-                    <li>🪙 What cryptocurrency really is</li>
-                    <li>⛓️ How blockchain transactions work</li>
-                    <li>🔒 Why crypto is secure and decentralized</li>
-                    <li>🛡️ How to safely interact with blockchain</li>
+                    <li>🪙 Ask questions about cryptocurrency</li>
+                    <li>⛓️ Learn how blockchain works</li>
+                    <li>🔒 Understand crypto security</li>
+                    <li>🎓 Get ready for your quiz!</li>
                   </ul>
                 </div>
 
                 <Button
                   onClick={handleAIIntro}
-                  disabled={isLoading}
                   size="lg"
                   className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white shadow-lg transform hover:scale-105 transition-all"
                 >
-                  {isLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}🚀 Start Learning with Alex! 🚀
+                  ✅ I'm Ready for the Quiz!
                 </Button>
               </div>
             </div>
           </DialogContent>
         </Dialog>
 
-        <Dialog open={activeModal === "practice"} onOpenChange={() => setActiveModal(null)}>
-          <DialogContent className="bg-gradient-to-br from-yellow-50 to-orange-50 border-2 border-yellow-200">
+        <Dialog open={activeModal === "quiz"} onOpenChange={() => setActiveModal(null)}>
+          <DialogContent className="bg-gradient-to-br from-blue-50 to-cyan-50 border-2 border-blue-200 max-w-2xl">
             <DialogHeader>
-              <DialogTitle className="flex items-center gap-2 text-orange-800">
-                <Zap className="w-5 h-5 text-yellow-500" />⚡ Your First Blockchain Transaction ⚡
+              <DialogTitle className="flex items-center gap-2 text-blue-800">
+                <Target className="w-5 h-5 text-cyan-500" />🧠 Crypto Knowledge Quiz 🧠
               </DialogTitle>
-              <DialogDescription className="text-orange-600">
-                Make a real transaction on the Flow testnet - completely safe for learning! 🛡️✨
+              <DialogDescription className="text-blue-600">
+                Test what you learned! Get 2/3 correct to win an NFT! 🏆✨
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-6">
-              <div className="bg-gradient-to-r from-yellow-100 to-orange-100 p-4 rounded-lg border-2 border-yellow-300">
-                <h4 className="font-medium text-orange-900 mb-2">🎯 Transaction Details:</h4>
-                <div className="text-sm space-y-1 text-orange-800">
-                  <p>💰 Amount: 0.1 FLOW (testnet tokens)</p>
-                  <p>🌐 Network: Flow Testnet</p>
-                  <p>🎓 Purpose: Learning transaction</p>
-                  <p>🆓 Cost: Free (testnet)</p>
-                </div>
-              </div>
-
-              <div className="text-center">
-                <Button
-                  onClick={handlePracticeTransaction}
-                  disabled={isLoading}
-                  size="lg"
-                  className="w-full bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white shadow-lg transform hover:scale-105 transition-all"
-                >
-                  {isLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
-                  {isLoading ? "🪄 Processing Magic..." : "🚀 Send My First Transaction! 🚀"}
-                </Button>
-              </div>
-
-              {isLoading && (
-                <div className="text-center space-y-2">
-                  <p className="text-sm text-orange-700">
-                    ✨ Your transaction is being processed on the magical blockchain... ✨
-                  </p>
-                  <div className="flex justify-center space-x-1">
-                    <div className="w-3 h-3 bg-gradient-to-r from-yellow-400 to-orange-400 rounded-full animate-bounce"></div>
-                    <div
-                      className="w-3 h-3 bg-gradient-to-r from-orange-400 to-red-400 rounded-full animate-bounce"
-                      style={{ animationDelay: "0.1s" }}
-                    ></div>
-                    <div
-                      className="w-3 h-3 bg-gradient-to-r from-red-400 to-pink-400 rounded-full animate-bounce"
-                      style={{ animationDelay: "0.2s" }}
-                    ></div>
+              {!quizCompleted ? (
+                <>
+                  <div className="bg-gradient-to-r from-blue-100 to-cyan-100 p-4 rounded-lg border-2 border-blue-300">
+                    <div className="flex justify-between items-center mb-4">
+                      <h4 className="font-medium text-blue-900">Question {currentQuizQuestion + 1} of {quizQuestions.length}</h4>
+                      <Badge variant="secondary">Score: {quizScore}/{currentQuizQuestion}</Badge>
+                    </div>
+                    <h3 className="text-lg font-semibold text-blue-800 mb-4">{quizQuestions[currentQuizQuestion].question}</h3>
+                    
+                    <div className="space-y-3">
+                      {quizQuestions[currentQuizQuestion].options.map((option, index) => (
+                        <button
+                          key={index}
+                          onClick={() => handleQuizAnswer(index)}
+                          className={`w-full p-3 text-left rounded-lg border-2 transition-all ${
+                            selectedAnswer === index
+                              ? 'border-blue-500 bg-blue-100 text-blue-900'
+                              : 'border-gray-200 bg-white hover:border-blue-300 hover:bg-blue-50'
+                          }`}
+                        >
+                          {String.fromCharCode(65 + index)}. {option}
+                        </button>
+                      ))}
+                    </div>
                   </div>
+
+                  <div className="text-center">
+                    <Button
+                      onClick={handleNextQuestion}
+                      disabled={selectedAnswer === null}
+                      size="lg"
+                      className="w-full bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white shadow-lg"
+                    >
+                      {currentQuizQuestion < quizQuestions.length - 1 ? 'Next Question' : 'Finish Quiz'} ➡️
+                    </Button>
+                  </div>
+                </>
+              ) : (
+                <div className="text-center space-y-4">
+                  <h3 className="text-xl font-bold text-blue-800">Quiz Complete! 🎉</h3>
+                  <p className="text-blue-700">Final Score: {quizScore}/{quizQuestions.length}</p>
+                  {quizScore >= 2 ? (
+                    <p className="text-green-600 font-semibold">🏆 Congratulations! You passed! Time to claim your NFT! 🏆</p>
+                  ) : (
+                    <>
+                      <p className="text-orange-600">📚 Keep learning and try again!</p>
+                      <Button onClick={resetQuiz} className="mt-4">Try Again</Button>
+                    </>
+                  )}
                 </div>
               )}
             </div>
           </DialogContent>
         </Dialog>
 
-        <Dialog open={activeModal === "achievement"} onOpenChange={() => setActiveModal(null)}>
+        <Dialog open={activeModal === "nft-reward"} onOpenChange={() => setActiveModal(null)}>
           <DialogContent className="bg-gradient-to-br from-green-50 to-emerald-50 border-2 border-green-200">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2 text-green-800">
@@ -645,20 +640,20 @@ export function LearningFlow() {
                   </div>
 
                   <div className="space-y-4">
-                    <h3 className="font-semibold text-lg text-green-800">🎉 Congratulations! 🎉</h3>
+                    <h3 className="font-semibold text-lg text-green-800">🎉 Quiz Master! 🎉</h3>
                     <p className="text-green-700">
-                      ✨ You've successfully completed your first crypto transaction! Now claim your permanent
-                      achievement certificate as a magical NFT! ✨
+                      ✨ You've successfully passed the crypto knowledge quiz! Now claim your permanent
+                      "Crypto Explorer" certificate as a magical NFT! ✨
                     </p>
 
                     <div className="bg-gradient-to-r from-yellow-100 to-orange-100 p-4 rounded-lg border-2 border-yellow-300">
                       <p className="text-sm text-orange-800">
                         <strong>🎁 Your magical NFT will include:</strong>
-                        <br />🏅 Proof of transaction completion
+                        <br />🏅 Proof of crypto knowledge mastery
+                        <br />🧠 Quiz completion with score: {quizScore}/{quizQuestions.length}
                         <br />⏰ Learning milestone timestamp
                         <br />🆔 Unique certificate ID
-                        <br />
-                        ⛓️ Permanent blockchain record
+                        <br />⛓️ Permanent blockchain record
                       </p>
                     </div>
 
