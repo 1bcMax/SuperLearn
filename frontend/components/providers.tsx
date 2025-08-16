@@ -26,10 +26,10 @@ const loadDynamicComponents = async (): Promise<DynamicComponents> => {
     ])
     
     const components = {
-      DynamicContextProvider: coreModule.DynamicContextProvider,
-      EthereumWalletConnectors: ethereumModule.EthereumWalletConnectors,
-      FlowWalletConnectors: flowModule.FlowWalletConnectors,
-      DynamicWidget: coreModule.DynamicWidget
+      DynamicContextProvider: coreModule?.DynamicContextProvider,
+      EthereumWalletConnectors: ethereumModule?.EthereumWalletConnectors,
+      FlowWalletConnectors: flowModule?.FlowWalletConnectors,
+      DynamicWidget: coreModule?.DynamicWidget
     }
     
     console.log("[Dynamic] Multi-chain components loaded:", {
@@ -51,10 +51,10 @@ const loadDynamicComponents = async (): Promise<DynamicComponents> => {
     ])
     
     return {
-      DynamicContextProvider: coreModule.DynamicContextProvider,
-      EthereumWalletConnectors: ethereumModule.EthereumWalletConnectors,
+      DynamicContextProvider: coreModule?.DynamicContextProvider,
+      EthereumWalletConnectors: ethereumModule?.EthereumWalletConnectors,
       FlowWalletConnectors: null,
-      DynamicWidget: coreModule.DynamicWidget
+      DynamicWidget: coreModule?.DynamicWidget
     }
   }
 }
@@ -108,7 +108,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
     )
   }
 
-  if (!dynamicComponents.DynamicContextProvider || (!dynamicComponents.EthereumWalletConnectors && !dynamicComponents.FlowWalletConnectors)) {
+  if (!dynamicComponents?.DynamicContextProvider || (!dynamicComponents?.EthereumWalletConnectors && !dynamicComponents?.FlowWalletConnectors)) {
     console.log("[Dynamic] Components not available, using fallback")
     return <FallbackProvider>{children}</FallbackProvider>
   }
@@ -142,6 +142,36 @@ export function Providers({ children }: { children: React.ReactNode }) {
         // Add Flow EVM network configuration
         evmNetworks: [
           {
+            blockExplorerUrls: ['https://etherscan.io'],
+            chainId: 1, // Ethereum Mainnet
+            chainName: 'Ethereum Mainnet',
+            iconUrls: ['https://cryptologos.cc/logos/ethereum-eth-logo.png'],
+            name: 'Ethereum Mainnet',
+            nativeCurrency: {
+              decimals: 18,
+              name: 'Ether',
+              symbol: 'ETH',
+            },
+            networkId: 1,
+            rpcUrls: ['https://mainnet.infura.io/v3/'],
+            vanityName: 'Ethereum',
+          },
+          {
+            blockExplorerUrls: ['https://sepolia.etherscan.io'],
+            chainId: 11155111, // Sepolia Testnet
+            chainName: 'Sepolia Testnet',
+            iconUrls: ['https://cryptologos.cc/logos/ethereum-eth-logo.png'],
+            name: 'Sepolia Testnet',
+            nativeCurrency: {
+              decimals: 18,
+              name: 'Sepolia Ether',
+              symbol: 'ETH',
+            },
+            networkId: 11155111,
+            rpcUrls: ['https://sepolia.infura.io/v3/'],
+            vanityName: 'Sepolia',
+          },
+          {
             blockExplorerUrls: ['https://evm-testnet.flowscan.io'],
             chainId: 545, // Flow EVM Testnet
             chainName: 'Flow EVM Testnet',
@@ -172,6 +202,10 @@ export function Providers({ children }: { children: React.ReactNode }) {
             vanityName: 'Flow Mainnet',
           }
         ],
+        // Add default chains for WalletConnect
+        overrides: {
+          evmNetworks: (networks: any[]) => networks,
+        },
         events: {
           onAuthSuccess: (event: any) => {
             console.log("[Dynamic] Multi-chain auth success:", event)

@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { ErrorBoundary } from "react-error-boundary"
 import { LearningFlow } from "@/components/learning-flow"
+import { AIAgentChat } from "@/components/ai-agent-chat"
 
 // Dynamic Debug Widget with safer imports
 const DynamicDebugWidget = () => {
@@ -75,10 +76,42 @@ function ErrorFallback({ error }: { error: Error }) {
 }
 
 export default function HomePage() {
+  const [currentView, setCurrentView] = useState<'learning' | 'ai-chat'>('learning')
+
   return (
     <ErrorBoundary FallbackComponent={ErrorFallback}>
       <DynamicDebugWidget />
-      <LearningFlow />
+      
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
+        <div className="max-w-6xl mx-auto">
+          <div className="flex justify-center mb-6">
+            <div className="flex bg-white rounded-lg p-1 shadow-sm">
+              <button
+                onClick={() => setCurrentView('learning')}
+                className={`px-4 py-2 rounded-md transition-colors ${
+                  currentView === 'learning'
+                    ? 'bg-blue-500 text-white'
+                    : 'text-gray-600 hover:text-blue-500'
+                }`}
+              >
+                📚 Learning Flow
+              </button>
+              <button
+                onClick={() => setCurrentView('ai-chat')}
+                className={`px-4 py-2 rounded-md transition-colors ${
+                  currentView === 'ai-chat'
+                    ? 'bg-blue-500 text-white'
+                    : 'text-gray-600 hover:text-blue-500'
+                }`}
+              >
+                🤖 AI Agent Chat
+              </button>
+            </div>
+          </div>
+          
+          {currentView === 'learning' ? <LearningFlow /> : <AIAgentChat />}
+        </div>
+      </div>
     </ErrorBoundary>
   )
 }
