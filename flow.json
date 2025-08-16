@@ -1,0 +1,21 @@
+{
+  "version": "1.0",
+  "contracts": {
+    "SuperLearnActions": "./cadence/contracts/SuperLearnActions.cdc"
+  },
+  "networks": {
+    "emulator": "127.0.0.1:3569",
+    "testnet": "access.devnet.nodes.onflow.org:9000"
+  },
+  "accounts": {
+    "emulator-account": {
+      "address": "0xf8d6e0586b0a20c7",
+      "key": "5112883de06b9576af62b9aafa7ead685fb7fb46c495039b1a83649d61bff97c"
+    }
+  },
+  "deployments": {
+    "emulator": {
+      "emulator-account": ["SuperLearnActions"]
+    }
+  }
+}
