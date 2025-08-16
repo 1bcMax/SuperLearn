@@ -1,7 +1,29 @@
 "use client"
 
 import { useState } from "react"
-import { useDynamicContext, useIsLoggedIn } from "@dynamic-labs/sdk-react-core"
+// Safe Dynamic context hook that falls back gracefully
+const useSafeDynamicContext = () => {
+  try {
+    const { useDynamicContext } = require("@dynamic-labs/sdk-react-core")
+    return useDynamicContext()
+  } catch (error) {
+    console.log("[v0] Using fallback Dynamic context in wallet widget")
+    return {
+      setShowAuthFlow: () => {},
+      primaryWallet: null,
+      user: null,
+    }
+  }
+}
+
+const useSafeIsLoggedIn = () => {
+  try {
+    const { useIsLoggedIn } = require("@dynamic-labs/sdk-react-core")
+    return useIsLoggedIn()
+  } catch (error) {
+    return false
+  }
+}
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -16,8 +38,8 @@ interface WalletWidgetProps {
 }
 
 export function WalletWidget({ onWalletConnected, showBalance = true, className }: WalletWidgetProps) {
-  const { setShowAuthFlow, primaryWallet, user } = useDynamicContext()
-  const isLoggedIn = useIsLoggedIn()
+  const { setShowAuthFlow, primaryWallet, user } = useSafeDynamicContext()
+  const isLoggedIn = useSafeIsLoggedIn()
   const [showAddress, setShowAddress] = useState(false)
   const [copied, setCopied] = useState(false)
 

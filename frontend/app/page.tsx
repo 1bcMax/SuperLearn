@@ -1,7 +1,56 @@
 "use client"
 
+import { useState, useEffect } from "react"
 import { ErrorBoundary } from "react-error-boundary"
 import { LearningFlow } from "@/components/learning-flow"
+
+// Dynamic Debug Widget with safer imports
+const DynamicDebugWidget = () => {
+  const [dynamicLoaded, setDynamicLoaded] = useState(false)
+  const [components, setComponents] = useState<any>(null)
+
+  useEffect(() => {
+    const loadComponents = async () => {
+      try {
+        const core = await import("@dynamic-labs/sdk-react-core")
+        setComponents({ 
+          DynamicWidget: core.DynamicWidget, 
+          useDynamicContext: core.useDynamicContext 
+        })
+        setDynamicLoaded(true)
+      } catch (error) {
+        console.log("[Debug] Dynamic components failed to load:", error)
+      }
+    }
+    loadComponents()
+  }, [])
+
+  if (!dynamicLoaded || !components) {
+    return (
+      <div className="fixed top-4 right-4 z-50 bg-yellow-100 p-2 rounded text-xs border">
+        🔄 Loading Dynamic...
+      </div>
+    )
+  }
+
+  const DebugComponent = () => {
+    const { user, primaryWallet, isAuthenticated } = components.useDynamicContext()
+    return (
+      <div className="fixed top-4 right-4 z-50 bg-white p-4 rounded-lg shadow-lg border max-w-sm">
+        <h3 className="font-bold text-sm mb-2">🐛 Dynamic Debug</h3>
+        <components.DynamicWidget />
+        {isAuthenticated && (
+          <div className="mt-2 text-xs">
+            <p>✅ User: {user?.email || user?.userId}</p>
+            <p>💰 Wallet: {primaryWallet?.address?.slice(0, 8)}...</p>
+          </div>
+        )}
+      </div>
+    )
+  }
+
+  return <DebugComponent />
+}
 
 function ErrorFallback({ error }: { error: Error }) {
   return (
@@ -23,6 +72,7 @@ function ErrorFallback({ error }: { error: Error }) {
 export default function HomePage() {
   return (
     <ErrorBoundary FallbackComponent={ErrorFallback}>
+      <DynamicDebugWidget />
       <LearningFlow />
     </ErrorBoundary>
   )
