@@ -3,7 +3,7 @@
 import type React from "react"
 
 import { useState, useRef, useEffect } from "react"
-import { useDynamicContext } from './providers'
+import { usePrivy } from './providers'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
@@ -124,7 +124,7 @@ export function AIMentorChat({ childName = "there", onLessonComplete }: AIMentor
   const [isTyping, setIsTyping] = useState(false)
   const [showWallet, setShowWallet] = useState(false)
   const scrollAreaRef = useRef<HTMLDivElement>(null)
-  const { isAuthenticated } = useDynamicContext()
+  const { authenticated } = usePrivy()
 
   const scrollToBottom = () => {
     if (scrollAreaRef.current) {

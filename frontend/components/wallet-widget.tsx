@@ -1,8 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { useDynamicContext, useUserWallets } from './providers'
-import { DynamicWidget } from "@dynamic-labs/sdk-react-core"
+import { usePrivy, useWallets, useLogin } from './providers'
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -17,9 +16,10 @@ interface WalletWidgetProps {
 }
 
 export function WalletWidget({ onWalletConnected, showBalance = true, className }: WalletWidgetProps) {
-  const { isAuthenticated, user, primaryWallet } = useDynamicContext()
-  const wallets = useUserWallets()
-  const ready = true // Dynamic is always ready
+  const { ready, authenticated, user } = usePrivy()
+  const { wallets } = useWallets()
+  const { login } = useLogin()
+  const primaryWallet = wallets[0]
   const [showAddress, setShowAddress] = useState(false)
   const [copied, setCopied] = useState(false)
 
@@ -55,7 +55,7 @@ export function WalletWidget({ onWalletConnected, showBalance = true, className 
     )
   }
 
-  if (!isAuthenticated) {
+  if (!authenticated) {
     return (
       <Card className={cn("border-border", className)}>
         <CardHeader className="text-center">
@@ -68,9 +68,12 @@ export function WalletWidget({ onWalletConnected, showBalance = true, className 
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <DynamicWidget />
+          <Button onClick={login} className="w-full">
+            <Wallet className="w-4 h-4 mr-2" />
+            Connect Wallet
+          </Button>
           <p className="text-xs text-muted-foreground text-center mt-3">
-            Multi-chain wallet • Ethereum & Flow EVM • Secure email login
+            Multi-chain wallet • Ethereum & Sepolia • Secure email login
           </p>
         </CardContent>
       </Card>

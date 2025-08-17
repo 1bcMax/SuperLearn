@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useRef, useEffect } from "react"
-import { useDynamicContext } from './providers'
+import { usePrivy, useWallets } from './providers'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
@@ -48,7 +48,7 @@ export function ClaudeAIChat({ childName = "there" }: ClaudeAIChatProps) {
   const [inputValue, setInputValue] = useState("")
   const [isTyping, setIsTyping] = useState(false)
   const scrollAreaRef = useRef<HTMLDivElement>(null)
-  const { isAuthenticated } = useDynamicContext()
+  const { authenticated } = usePrivy()
 
   const scrollToBottom = () => {
     if (scrollAreaRef.current) {

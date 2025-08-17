@@ -2,9 +2,8 @@
 
 import type React from "react"
 import { PrivyProvider } from "@privy-io/react-auth"
-import { WagmiProvider } from "@privy-io/wagmi"
+import { WagmiProvider, createConfig } from "wagmi"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
-import { createConfig } from "@privy-io/wagmi"
 import { mainnet, sepolia } from "viem/chains"
 import { http } from "viem"
 import { ExtensionHandler } from "./extension-handler"
@@ -71,9 +70,9 @@ export {
   useLogout,
 } from "@privy-io/react-auth"
 
-// Re-export wagmi hooks
+// Re-export wagmi hooks from the correct package
 export {
   useAccount,
   useConnect,
   useDisconnect,
-} from "@privy-io/wagmi"
+} from "wagmi"

@@ -4,41 +4,43 @@ import { useState } from "react"
 import { ErrorBoundary } from "react-error-boundary"
 import { LearningFlow } from "@/components/learning-flow"
 import { ClaudeAIChat } from "@/components/claude-ai-chat"
-import { useDynamicContext, useUserWallets } from '@/components/providers'
-import { DynamicWidget } from "@dynamic-labs/sdk-react-core"
+import { usePrivy, useWallets } from '@/components/providers'
 
 type LearningStep = "wallet" | "ai-intro" | "quiz" | "nft-reward"
 
-// Dynamic Debug Widget
-const DynamicDebugWidget = () => {
-  const { isAuthenticated, user, primaryWallet, setShowAuthFlow, handleLogOut } = useDynamicContext()
-  const wallets = useUserWallets()
+// Privy Debug Widget
+const PrivyDebugWidget = () => {
+  const { ready, authenticated, user } = usePrivy()
+  const { wallets } = useWallets()
+  
+  const primaryWallet = wallets[0]
 
   return (
     <div className="fixed top-4 right-4 z-50 bg-white p-4 rounded-lg shadow-lg border max-w-sm">
-      <h3 className="font-bold text-sm mb-2">🐛 Dynamic Debug</h3>
+      <h3 className="font-bold text-sm mb-2">🐛 Privy Debug</h3>
       
-      <div className="mb-2">
-        <DynamicWidget />
+      <div className="text-xs space-y-1">
+        <p>SDK Loaded: {ready ? '✅' : '⏳'}</p>
+        <p>Authenticated: {authenticated ? '✅' : '❌'}</p>
+        <p>Wallets: {wallets.length}</p>
       </div>
       
-      {isAuthenticated && (
-        <div className="text-xs space-y-1 border-t pt-2">
-          <p>✅ User: {user?.email || user?.verifiedCredentials?.[0]?.email || 'Connected'}</p>
+      {authenticated && (
+        <div className="text-xs space-y-1 border-t pt-2 mt-2">
+          <p>✅ User: {user?.email?.address || user?.google?.email || 'Connected'}</p>
           {primaryWallet && (
             <>
               <p>💰 Wallet: {primaryWallet.address?.slice(0, 8)}...</p>
-              <p>🔗 Type: {primaryWallet.connector?.name || 'Dynamic'}</p>
-              <p>🌐 Chain: {primaryWallet.network || 'Unknown'}</p>
+              <p>🔗 Type: {primaryWallet.walletClientType || 'Embedded'}</p>
+              <p>🌐 Chain: {primaryWallet.chainId || 'Unknown'}</p>
             </>
           )}
-          <p>📱 Wallets: {wallets.length}</p>
         </div>
       )}
       
       <div className="mt-2 text-xs text-gray-500 border-t pt-2">
-        <p>🌍 Supported: Ethereum + Flow EVM</p>
-        <p>📧 Login: Email, SMS, Wallet</p>
+        <p>🌍 Supported: Ethereum + Sepolia</p>
+        <p>📧 Login: Email, Google, Wallet</p>
       </div>
     </div>
   )
@@ -76,7 +78,7 @@ export default function HomePage() {
 
   return (
     <ErrorBoundary FallbackComponent={ErrorFallback}>
-      <DynamicDebugWidget />
+      <PrivyDebugWidget />
       
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
         <div className="max-w-6xl mx-auto">
