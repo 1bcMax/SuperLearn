@@ -30,17 +30,17 @@ export function ClaudeAIChat({ childName = "there" }: ClaudeAIChatProps) {
     {
       id: "1",
       type: "claude",
-      content: "Hello! I'm Claude, your AI learning assistant! 🎓✨ I can help you learn about blockchain, cryptocurrency, AI, programming, and many other topics. I can also create personalized quizzes to test your knowledge. What would you like to explore today?",
+      content: "Hey there! I'm Claude, your friendly crypto teacher! 🎮✨ I'm here to help you understand cool stuff like digital money, blockchain (it's like a super secure digital notebook!), and other awesome tech. I'll explain everything in a way that's easy to understand - like we're just chatting! What sounds fun to learn about today? 🚀",
       timestamp: new Date(),
       suggestions: [
-        "What is blockchain technology?",
-        "How do cryptocurrency wallets work?", 
-        "Explain Bitcoin vs Ethereum",
-        "What are smart contracts?",
+        "What's blockchain? (Like Minecraft but for money!)",
+        "How do digital wallets work?", 
+        "Bitcoin vs Ethereum - What's the difference?",
+        "What are smart contracts? (Robot agreements!)",
         "How does crypto mining work?",
-        "What is DeFi?",
-        "Generate a crypto quiz",
-        "What are NFTs?"
+        "What are NFTs? (Digital collectibles!)",
+        "Give me a fun crypto quiz!",
+        "Explain crypto like I'm 12"
       ],
       messageType: "chat"
     }
@@ -54,7 +54,9 @@ export function ClaudeAIChat({ childName = "there" }: ClaudeAIChatProps) {
     if (scrollAreaRef.current) {
       const scrollContainer = scrollAreaRef.current.querySelector("[data-radix-scroll-area-viewport]")
       if (scrollContainer) {
-        scrollContainer.scrollTop = scrollContainer.scrollHeight
+        setTimeout(() => {
+          scrollContainer.scrollTop = scrollContainer.scrollHeight
+        }, 100)
       }
     }
   }
@@ -102,13 +104,16 @@ export function ClaudeAIChat({ childName = "there" }: ClaudeAIChatProps) {
 
   const callClaudeAPI = async (message: string, type: string = "chat", options?: any) => {
     try {
+      // Add context for kid-friendly responses
+      const kidFriendlyPrompt = `Please explain this to a 12-year-old in a fun, engaging way. Use simple language, fun analogies (like video games, sports, or everyday things), and emojis. Keep it exciting but educational. User question: ${message}`
+      
       const response = await fetch("/api/chat", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          message,
+          message: type === "chat" ? kidFriendlyPrompt : message,
           type,
           ...options
         })
@@ -132,27 +137,29 @@ export function ClaudeAIChat({ childName = "there" }: ClaudeAIChatProps) {
 
   const generateLearningContent = async (topic: string, userLevel: string = "Beginner", learningStyle: string = "Visual") => {
     try {
-      const response = await callClaudeAPI(topic, "learn", {
+      const kidFriendlyTopic = `Explain ${topic} to a 12-year-old using fun examples, games comparisons, and simple language. Make it exciting!`
+      const response = await callClaudeAPI(kidFriendlyTopic, "learn", {
         topic,
-        user_level: userLevel,
+        user_level: "Kid-Friendly",
         learning_style: learningStyle
       })
       return response
     } catch (error) {
-      return `I'd be happy to help you learn about ${topic}! This is an exciting field with many practical applications. Let me know if you'd like me to explain any specific aspects or create a quiz about it.`
+      return `Hey! Let me tell you about ${topic} in a super cool way! 🎮 It's like when you're playing your favorite game... Want me to explain it differently or make a fun quiz about it? 🚀`
     }
   }
 
-  const generateQuiz = async (topic: string, difficulty: string = "medium", numQuestions: number = 3) => {
+  const generateQuiz = async (topic: string, difficulty: string = "easy", numQuestions: number = 3) => {
     try {
-      const response = await callClaudeAPI(topic, "quiz", {
+      const kidFriendlyQuizPrompt = `Create a fun, age-appropriate quiz about ${topic} for a 12-year-old. Use simple language and fun scenarios.`
+      const response = await callClaudeAPI(kidFriendlyQuizPrompt, "quiz", {
         topic,
-        difficulty,
+        difficulty: "kid-friendly",
         num_questions: numQuestions
       })
       return response
     } catch (error) {
-      return `I'd be happy to create a quiz about ${topic}! Unfortunately, I'm having some trouble generating the questions right now. Would you like to try a different topic or ask me to explain ${topic} concepts instead?`
+      return `Let's make a super fun quiz about ${topic}! 🎯 Hmm, I'm having a tiny problem making the questions right now. Want to try learning about ${topic} first, or pick something else cool to quiz on? 🎮`
     }
   }
 
@@ -209,25 +216,25 @@ export function ClaudeAIChat({ childName = "there" }: ClaudeAIChatProps) {
     const lowerMessage = message.toLowerCase()
     
     if (lowerMessage.includes("blockchain")) {
-      return ["What are smart contracts?", "How does consensus work?", "Explain blockchain nodes", "Generate a blockchain quiz"]
+      return ["What are smart contracts? (Robot helpers!)", "How does blockchain work like LEGO?", "Blockchain = Super secure diary?", "Fun blockchain quiz!"]
     } else if (lowerMessage.includes("bitcoin")) {
-      return ["How does Bitcoin mining work?", "What is proof of work?", "Bitcoin vs other cryptos", "Generate a Bitcoin quiz"]
+      return ["Bitcoin mining = Digital treasure hunt?", "How is Bitcoin like gold?", "Bitcoin vs video game coins", "Cool Bitcoin quiz!"]
     } else if (lowerMessage.includes("ethereum")) {
-      return ["What are smart contracts?", "Explain gas fees", "What is proof of stake?", "Generate an Ethereum quiz"]
+      return ["Smart contracts = Robot promises?", "What are gas fees? (Like delivery fees!)", "Ethereum = Computer for everyone?", "Ethereum quiz time!"]
     } else if (lowerMessage.includes("defi")) {
-      return ["What is yield farming?", "How do DEXs work?", "Explain liquidity pools", "Generate a DeFi quiz"]
+      return ["DeFi = Banks but cooler?", "How do crypto exchanges work?", "What's a liquidity pool? (Like a shared piggy bank!)", "DeFi quiz challenge!"]
     } else if (lowerMessage.includes("nft")) {
-      return ["How are NFTs created?", "NFT marketplaces explained", "NFT vs fungible tokens", "Generate an NFT quiz"]
+      return ["How to make NFTs? (Digital art!)", "NFTs = Pokemon cards but digital?", "Why are NFTs special?", "NFT quiz adventure!"]
     } else if (lowerMessage.includes("wallet")) {
-      return ["Hot vs cold wallets", "How do private keys work?", "Multi-signature wallets", "Generate a wallet security quiz"]
+      return ["Hot vs cold wallets (Like backpack vs safe!)", "What are private keys? (Secret passwords!)", "How to keep crypto safe?", "Wallet safety quiz!"]
     } else if (lowerMessage.includes("crypto") || lowerMessage.includes("cryptocurrency")) {
-      return ["Bitcoin vs Ethereum", "What is staking?", "Crypto trading basics", "Generate a crypto quiz"]
+      return ["Bitcoin vs Ethereum (Like Xbox vs PlayStation!)", "What is staking? (Earning rewards!)", "How does crypto work?", "Crypto quiz challenge!"]
     } else if (lowerMessage.includes("ai") || lowerMessage.includes("artificial intelligence")) {
-      return ["Learn about machine learning", "Generate an AI quiz", "Explain neural networks", "What is deep learning?"]
+      return ["AI = Super smart robots?", "Fun AI quiz!", "How do computers learn?", "What can AI do?"]
     } else if (lowerMessage.includes("programming") || lowerMessage.includes("coding")) {
-      return ["Learn about Python", "Generate a programming quiz", "Explain algorithms", "What are data structures?"]
+      return ["Python = Easy coding language!", "Coding quiz time!", "What are algorithms? (Recipe for computers!)", "How to start coding?"]
     } else {
-      return ["What is blockchain?", "How do wallets work?", "Explain Bitcoin", "Generate a crypto quiz"]
+      return ["What's blockchain? (Digital LEGO!)", "How do crypto wallets work?", "Bitcoin explained simply!", "Fun crypto quiz!"]
     }
   }
 
@@ -272,8 +279,8 @@ export function ClaudeAIChat({ childName = "there" }: ClaudeAIChatProps) {
 
   return (
     <div className="max-w-4xl mx-auto">
-      <Card className="h-[600px] flex flex-col">
-        <CardHeader className="border-b border-border pb-4">
+      <Card className="h-[calc(100vh-200px)] min-h-[500px] max-h-[700px] flex flex-col">
+        <CardHeader className="border-b border-border pb-4 flex-shrink-0">
           <div className="flex items-center gap-3">
             <Avatar className="w-10 h-10">
               <AvatarImage src="/claude-avatar.png" alt="Claude AI" />
@@ -301,9 +308,9 @@ export function ClaudeAIChat({ childName = "there" }: ClaudeAIChatProps) {
           </div>
         </CardHeader>
 
-        <CardContent className="flex-1 flex flex-col p-0">
-          <ScrollArea className="flex-1 p-4" ref={scrollAreaRef}>
-            <div className="space-y-4">
+        <CardContent className="flex-1 flex flex-col p-0 overflow-hidden">
+          <ScrollArea className="flex-1 h-full" ref={scrollAreaRef}>
+            <div className="space-y-4 p-4">
               {messages.map((message) => (
                 <div
                   key={message.id}
@@ -374,12 +381,12 @@ export function ClaudeAIChat({ childName = "there" }: ClaudeAIChatProps) {
             </div>
           </ScrollArea>
 
-          <div className="border-t border-border p-4">
+          <div className="border-t border-border p-4 flex-shrink-0">
             <form onSubmit={handleSubmit} className="flex gap-2">
               <Input
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
-                placeholder="Ask me about blockchain, Bitcoin, Ethereum, DeFi, NFTs, wallets, or request a quiz..."
+                placeholder="Ask me anything! Like: What's Bitcoin? How do NFTs work? Or say 'quiz me!' 🎮"
                 className="flex-1"
                 disabled={isTyping}
               />

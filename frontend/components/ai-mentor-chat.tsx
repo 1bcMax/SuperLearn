@@ -130,7 +130,9 @@ export function AIMentorChat({ childName = "there", onLessonComplete }: AIMentor
     if (scrollAreaRef.current) {
       const scrollContainer = scrollAreaRef.current.querySelector("[data-radix-scroll-area-viewport]")
       if (scrollContainer) {
-        scrollContainer.scrollTop = scrollContainer.scrollHeight
+        setTimeout(() => {
+          scrollContainer.scrollTop = scrollContainer.scrollHeight
+        }, 100)
       }
     }
   }
@@ -254,7 +256,7 @@ export function AIMentorChat({ childName = "there", onLessonComplete }: AIMentor
     <div className="grid lg:grid-cols-3 gap-6">
       {/* Chat Interface */}
       <div className="lg:col-span-2">
-        <Card className="h-[600px] flex flex-col">
+        <Card className="h-[calc(100vh-200px)] min-h-[500px] max-h-[700px] flex flex-col">
           <CardHeader className="border-b border-border pb-4">
             <div className="flex items-center gap-3">
               <Avatar className="w-10 h-10">
@@ -273,9 +275,9 @@ export function AIMentorChat({ childName = "there", onLessonComplete }: AIMentor
             </div>
           </CardHeader>
 
-          <CardContent className="flex-1 flex flex-col p-0">
-            <ScrollArea className="flex-1 p-4" ref={scrollAreaRef}>
-              <div className="space-y-4">
+          <CardContent className="flex-1 flex flex-col p-0 overflow-hidden">
+            <ScrollArea className="flex-1 h-full" ref={scrollAreaRef}>
+              <div className="space-y-4 p-4">
                 {messages.map((message) => (
                   <div
                     key={message.id}
@@ -348,7 +350,7 @@ export function AIMentorChat({ childName = "there", onLessonComplete }: AIMentor
               </div>
             </ScrollArea>
 
-            <div className="border-t border-border p-4">
+            <div className="border-t border-border p-4 flex-shrink-0">
               <form onSubmit={handleSubmit} className="flex gap-2">
                 <Input
                   value={inputValue}
