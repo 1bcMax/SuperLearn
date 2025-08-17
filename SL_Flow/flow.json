@@ -1,0 +1,29 @@
+{
+  "contracts": {
+    "SuperLearnNFT": {
+      "source": "cadence/contracts/SuperLearnNFT.cdc",
+      "aliases": {
+        "testnet": "0x943fcf89fc1cb60d"
+      }
+    }
+  },
+  "networks": {
+    "emulator": "127.0.0.1:3569",
+    "testnet": "access.devnet.nodes.onflow.org:9000",
+    "mainnet": "access.mainnet.nodes.onflow.org:9000"
+  },
+  "accounts": {
+    "testnet-account": {
+      "address": "0x943fcf89fc1cb60d",
+      "key": {
+				"type": "file",
+				"location": "emulator-account.pkey"
+			}
+    }
+  },
+  "deployments": {
+    "testnet": {
+      "testnet-account": ["SuperLearnNFT"]
+    }
+  }
+}

@@ -1,64 +1,79 @@
 "use client"
 
 import type React from "react"
-import { EthereumWalletConnectors } from "@dynamic-labs/ethereum"
-import { DynamicContextProvider, DynamicWidget } from "@dynamic-labs/sdk-react-core"
+import { PrivyProvider } from "@privy-io/react-auth"
+import { WagmiProvider } from "@privy-io/wagmi"
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
+import { createConfig } from "@privy-io/wagmi"
+import { mainnet, sepolia } from "viem/chains"
+import { http } from "viem"
 import { ExtensionHandler } from "./extension-handler"
 
-// Dynamic configuration with Ethereum and Flow EVM support
-const dynamicEnvironmentId = process.env.NEXT_PUBLIC_DYNAMIC_ENVIRONMENT_ID || ""
+// Create wagmi config
+const config = createConfig({
+  chains: [mainnet, sepolia],
+  transports: {
+    [mainnet.id]: http(),
+    [sepolia.id]: http(),
+  },
+})
+
+// Create query client
+const queryClient = new QueryClient()
+
+// Privy configuration
+const privyAppId = process.env.NEXT_PUBLIC_PRIVY_APP_ID || "cmeep9fyr01myjx0cmvbug65n"
+
+// Log the app ID for debugging (remove in production)
+if (typeof window !== 'undefined') {
+  console.log('[Privy] App ID:', privyAppId ? 'Set' : 'Missing')
+}
 
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <>
       <ExtensionHandler />
-      <DynamicContextProvider
-        settings={{
-          environmentId: dynamicEnvironmentId,
-          walletConnectors: [EthereumWalletConnectors],
-          overrides: {
-            evmNetworks: [
-              // Ethereum Mainnet
-              {
-                chainId: 1,
-                networkId: 1,
-                rpcUrls: ["https://mainnet.infura.io/v3/"],
-                blockExplorerUrls: ['https://etherscan.io'],
-                name: "Ethereum Mainnet",
-                nativeCurrency: {
-                  name: "Ethereum",
-                  symbol: "ETH",
-                  decimals: 18
-                },
-                iconUrls: ["https://cryptologos.cc/logos/ethereum-eth-logo.png"]
-              },
-              // Flow EVM Testnet
-              {
-                chainId: 545,
-                networkId: 545,
-                rpcUrls: ["https://testnet.evm.nodes.onflow.org"],
-                blockExplorerUrls: ['https://evm-testnet.flowscan.io'],
-                name: "Flow EVM Testnet",
-                nativeCurrency: {
-                  name: "Ethereum",
-                  symbol: "ETH",
-                  decimals: 18
-                },
-                iconUrls: ["https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTNM0vktSb8boTsIfga-aHzrzqVlGnEzewXPA&s"]
-                }
-              }
-            ]
-          }
+      <PrivyProvider
+        appId={privyAppId}
+        config={{
+          // Appearance configuration
+          appearance: {
+            theme: 'light',
+            accentColor: '#676FFF',
+            logo: 'https://i.imgur.com/JscDmDe.png',
+          },
+          // Login methods
+          loginMethods: ['email', 'wallet', 'google'],
+          // Chain configuration
+          defaultChain: sepolia,
+          supportedChains: [mainnet, sepolia],
+          // Embedded wallets
+          embeddedWallets: {
+            createOnLogin: 'users-without-wallets',
+          },
         }}
       >
-        {children}
-      </DynamicContextProvider>
+        <QueryClientProvider client={queryClient}>
+          <WagmiProvider config={config}>
+            {children}
+          </WagmiProvider>
+        </QueryClientProvider>
+      </PrivyProvider>
     </>
   )
 }
 
-// Re-export Dynamic hooks directly
+// Re-export Privy hooks
 export { 
-  useDynamicContext, 
-  useUserWallets 
-} from "@dynamic-labs/sdk-react-core"
+  usePrivy,
+  useWallets,
+  useLogin,
+  useLogout,
+} from "@privy-io/react-auth"
+
+// Re-export wagmi hooks
+export {
+  useAccount,
+  useConnect,
+  useDisconnect,
+} from "@privy-io/wagmi"

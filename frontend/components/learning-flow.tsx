@@ -8,47 +8,91 @@ import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { CheckCircle, Wallet, Brain, Trophy, ArrowRight, Loader2, ArrowDown, Zap, Target, Award } from "lucide-react"
-import { useDynamicContext, useUserWallets } from './providers'
-import { DynamicWidget } from "@dynamic-labs/sdk-react-core"
+import { usePrivy, useWallets, useLogin, useLogout } from './providers'
+
+// Cadence transaction templates as strings
+const SetupAccountTx = `
+import SuperLearnNFT from "../SuperLearnNFT.cdc"
+import NonFungibleToken from 0x631e88ae7f1d7c20
+import MetadataViews from 0x631e88ae7f1d7c20
+
+transaction {
+    prepare(signer: AuthAccount) {
+        if signer.borrow<&SuperLearnNFT.Collection>(from: SuperLearnNFT.CollectionStoragePath) == nil {
+            let collection <- SuperLearnNFT.createEmptyCollection()
+            signer.save(<-collection, to: SuperLearnNFT.CollectionStoragePath)
+            signer.link<&SuperLearnNFT.Collection{NonFungibleToken.CollectionPublic, SuperLearnNFT.CollectionPublicPath, MetadataViews.ResolverCollection}>(SuperLearnNFT.CollectionPublicPath, target: SuperLearnNFT.CollectionStoragePath)
+        }
+    }
+}
+`;
+
+const MintNFTTx = `
+import SuperLearnNFT from "../SuperLearnNFT.cdc"
+import NonFungibleToken from 0x1d7e57aa55817448
+
+transaction(recipient: Address, name: String, description: String, thumbnail: String) {
+    let minter: &SuperLearnNFT.NFTMinter
+    let recipientCollection: &{NonFungibleToken.CollectionPublic}
+
+    prepare(signer: AuthAccount) {
+        self.minter = signer.borrow<&SuperLearnNFT.NFTMinter>(from: SuperLearnNFT.MinterStoragePath)
+            ?? panic("Could not borrow a reference to the NFT Minter")
+
+        self.recipientCollection = getAccount(recipient).getCapability(SuperLearnNFT.CollectionPublicPath)
+            .borrow<&{NonFungibleToken.CollectionPublic}>()
+            ?? panic("Could not borrow a reference to the recipient's collection")
+    }
+
+    execute {
+        self.minter.mintNFT(
+            recipient: self.recipientCollection,
+            name: name,
+            description: description,
+            thumbnail: thumbnail
+        )
+    }
+}
+`;
+
 // Simplified demo version - no Flow blockchain dependencies
 
-// Dynamic authentication hook
-const useDynamicAuth = () => {
-  const { isAuthenticated, user, primaryWallet, setShowAuthFlow, handleLogOut } = useDynamicContext()
-  const wallets = useUserWallets()
+// Privy authentication hook
+const usePrivyAuth = () => {
+  const { ready, authenticated, user, logout } = usePrivy()
+  const { wallets } = useWallets()
+  const { login } = useLogin()
   
-  // Dynamic SDK needs time to initialize
-  const isReady = isAuthenticated !== undefined
-  const isAuth = Boolean(isAuthenticated)
+  // Get the primary wallet (first embedded or external wallet)
+  const primaryWallet = wallets[0]
   
-  console.log("[Dynamic] Auth state:", {
-    isReady,
-    isAuthenticated,
-    isAuth,
-    user: user?.email || user?.verifiedCredentials?.[0]?.email,
+  console.log("[Privy] Auth state:", {
+    ready,
+    authenticated,
+    user: user?.email?.address || user?.google?.email,
     walletCount: wallets.length,
     primaryWallet: primaryWallet?.address
   })
     
   return {
-    ready: isReady,
-    authenticated: isAuth,
+    ready,
+    authenticated,
     user,
     primaryWallet,
-    login: () => setShowAuthFlow(true),
-    logout: handleLogOut
+    login,
+    logout
   }
 }
 
-// Dynamic Login Button Component
-const DynamicLoginButton = () => {
-  const { ready, authenticated } = useDynamicAuth()
+// Privy Login Button Component
+const PrivyLoginButton = () => {
+  const { ready, authenticated, login } = usePrivyAuth()
   
   if (!ready) {
     return (
       <Button disabled className="w-full">
         <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-        Loading Dynamic...
+        Loading Privy...
       </Button>
     )
   }
@@ -63,9 +107,13 @@ const DynamicLoginButton = () => {
   }
   
   return (
-    <div className="w-full">
-      <DynamicWidget />
-    </div>
+    <Button 
+      onClick={login}
+      className="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white"
+    >
+      <Wallet className="w-4 h-4 mr-2" />
+      Connect with Email or Wallet
+    </Button>
   )
 }
 
@@ -129,7 +177,7 @@ export function LearningFlow({
   const [demoNftMinting, setDemoNftMinting] = useState(false);
 
 
-  const { ready, authenticated, user, primaryWallet, login } = useDynamicAuth()
+  const { ready, authenticated, user, primaryWallet, login } = usePrivyAuth()
   
   const completeStep = (step: LearningStep) => {
     console.log(`[SuperLearn] Completing step: ${step}`)
@@ -179,10 +227,10 @@ export function LearningFlow({
   
   // Debug the context
   useEffect(() => {
-    console.log("[SuperLearn] Dynamic auth state:", {
+    console.log("[SuperLearn] Privy auth state:", {
       ready,
       authenticated,
-      user: user?.email,
+      user: user?.email?.address || user?.google?.email,
       wallet: primaryWallet?.address
     })
   }, [ready, authenticated, user, primaryWallet])
@@ -236,7 +284,7 @@ export function LearningFlow({
       hasWalletCompleted: completedSteps.has("wallet")
     })
     
-    // Only proceed if Dynamic is ready and user is authenticated
+    // Only proceed if Privy is ready and user is authenticated
     if (ready && authenticated && primaryWallet) {
       console.log("[SuperLearn] Wallet connected:", {
         authenticated,
@@ -327,21 +375,52 @@ export function LearningFlow({
   }
 
   const handleMintNFT = async () => {
-    setIsLoading(true)
-    setDemoNftMinting(true)
-    
-    // Simulate NFT minting process
-    await new Promise((resolve) => setTimeout(resolve, 3000))
-    
-    // Generate demo transaction hash
-    const demoTxHash = `0x${Math.random().toString(16).substr(2, 64)}`
-    setTransactionHash(demoTxHash)
-    
-    setNftMinted(true)
-    completeStep("nft-reward")
-    setIsLoading(false)
-    setDemoNftMinting(false)
-  }
+    setIsLoading(true);
+
+    try {
+        // Simulated NFT minting for demo
+        // In production, you would integrate with Flow blockchain here
+        console.log("Minting NFT certificate...");
+        
+        // Simulate a delay for minting
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        
+        // Generate a mock transaction hash
+        const mockTxHash = `0x${Math.random().toString(16).substr(2, 64)}`;
+        setTransactionHash(mockTxHash);
+        
+        setNftMinted(true);
+        completeStep("nft-reward");
+        
+        console.log("NFT minted successfully!", mockTxHash);
+        
+        // Note: To enable real Flow NFT minting:
+        // 1. Install: npm install @onflow/fcl @onflow/types
+        // 2. Uncomment the Flow integration code below
+        
+        /* 
+        // Real Flow integration (commented out for now)
+        const fcl = await import('@onflow/fcl');
+        const t = await import('@onflow/types');
+        
+        fcl.config({
+            "accessNode.api": "https://rest-testnet.onflow.org",
+            "discovery.wallet": "https://fcl-discovery.onflow.org/testnet/authn",
+            "0xSuperLearnNFT": "0x4f0247354a3307c2",
+            "0xNonFungibleToken": "0x631e88ae7f1d7c20",
+            "0xMetadataViews": "0x631e88ae7f1d7c20",
+        });
+        
+        const user = await fcl.authenticate();
+        // ... rest of Flow minting logic
+        */
+    } catch (error) {
+        console.error("NFT Minting failed:", error);
+        alert("Failed to mint NFT. Please try again.");
+    } finally {
+        setIsLoading(false);
+    }
+  };
 
   const openStepModal = (stepId: LearningStep) => {
     console.log("[SuperLearn] Opening step modal:", stepId, "currentStep:", currentStep, "completed:", completedSteps.has(stepId))
@@ -481,7 +560,7 @@ export function LearningFlow({
                   <p className="text-blue-700">
                     🌟 Your multi-chain wallet supports both Ethereum and Flow EVM networks. It will be secured with your email - no complicated stuff to remember! 🌟
                   </p>
-                  <DynamicLoginButton />
+                  <PrivyLoginButton />
                 </div>
               ) : walletCreating ? (
                 <div className="space-y-4">
