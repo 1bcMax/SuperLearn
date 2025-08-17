@@ -83,27 +83,6 @@ Traditional crypto education relies on theoretical knowledge without practical v
 - **Permanent Credentials**: NFT certificates provide lasting value beyond the platform
 - **Rapid Development**: Nora AI enables sophisticated features within hackathon timeframe
 
-## Multi-Bounty Strategy
-
-### **Primary Targets**:
-
-**Dynamic Consumer App Track - $3,333**
-- **Strength**: Perfect consumer use case targeting youth education market
-- **Innovation**: Seamless crypto onboarding without traditional Web3 friction
-- **Impact**: Demonstrates embedded wallet potential for educational applications
-
-**Flow Builder Pool Prize - $10,000**
-- **Strength**: Innovative use of Flow blockchain for educational certification
-- **Technical Merit**: Smart contracts for learning progress and achievement verification
-- **Ecosystem Value**: Demonstrates Flow's potential for mainstream consumer applications
-
-**Nora AI Coding Track - $1,000**
-- **Strength**: Showcase Nora's capabilities in educational application development
-- **Innovation**: AI-assisted rapid development of complex Web3 educational platform
-- **Technical Depth**: Leverage Nora for smart contract optimization and user experience enhancement
-
-**Total Potential**: $14,333 across three bounties
-
 ## Market Impact & Vision
 
 ### **Immediate Impact**:
