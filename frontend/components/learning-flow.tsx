@@ -17,15 +17,22 @@ const useDynamicAuth = () => {
   const { isAuthenticated, user, primaryWallet, setShowAuthFlow, handleLogOut } = useDynamicContext()
   const wallets = useUserWallets()
   
+  // Dynamic SDK needs time to initialize
+  const isReady = isAuthenticated !== undefined
+  const isAuth = Boolean(isAuthenticated)
+  
   console.log("[Dynamic] Auth state:", {
+    isReady,
     isAuthenticated,
-    user: user?.email,
-    walletCount: wallets.length
+    isAuth,
+    user: user?.email || user?.verifiedCredentials?.[0]?.email,
+    walletCount: wallets.length,
+    primaryWallet: primaryWallet?.address
   })
     
   return {
-    ready: true, // Dynamic is always ready
-    authenticated: isAuthenticated,
+    ready: isReady,
+    authenticated: isAuth,
     user,
     primaryWallet,
     login: () => setShowAuthFlow(true),
@@ -221,6 +228,7 @@ export function LearningFlow({
   // Handle wallet connection completion
   useEffect(() => {
     console.log("[SuperLearn] useEffect triggered with:", {
+      ready,
       authenticated,
       primaryWallet: primaryWallet?.address,
       currentStep,
@@ -228,7 +236,8 @@ export function LearningFlow({
       hasWalletCompleted: completedSteps.has("wallet")
     })
     
-    if (authenticated && primaryWallet) {
+    // Only proceed if Dynamic is ready and user is authenticated
+    if (ready && authenticated && primaryWallet) {
       console.log("[SuperLearn] Wallet connected:", {
         authenticated,
         wallet: primaryWallet.address,
@@ -249,7 +258,7 @@ export function LearningFlow({
         }, 1500)
       }
     }
-  }, [authenticated, primaryWallet, currentStep, completedSteps])
+  }, [ready, authenticated, primaryWallet, currentStep, completedSteps])
 
 
   const handleWalletCreation = () => {
