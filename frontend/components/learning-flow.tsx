@@ -125,7 +125,12 @@ export function LearningFlow({
   const { ready, authenticated, user, primaryWallet, login } = useDynamicAuth()
   
   const completeStep = (step: LearningStep) => {
-    setCompletedSteps(new Set([...completedSteps, step]))
+    console.log(`[SuperLearn] Completing step: ${step}`)
+    setCompletedSteps(prev => {
+      const newSet = new Set([...prev, step])
+      console.log(`[SuperLearn] Updated completed steps:`, Array.from(newSet))
+      return newSet
+    })
   }
   
   // Quiz questions data
@@ -215,12 +220,22 @@ export function LearningFlow({
 
   // Handle wallet connection completion
   useEffect(() => {
+    console.log("[SuperLearn] useEffect triggered with:", {
+      authenticated,
+      primaryWallet: primaryWallet?.address,
+      currentStep,
+      completedSteps: Array.from(completedSteps),
+      hasWalletCompleted: completedSteps.has("wallet")
+    })
+    
     if (authenticated && primaryWallet) {
       console.log("[SuperLearn] Wallet connected:", {
         authenticated,
         wallet: primaryWallet.address,
-        currentStep
+        currentStep,
+        alreadyCompleted: completedSteps.has("wallet")
       })
+      
       setWalletAddress(primaryWallet.address)
       setWalletCreating(false)
       
@@ -229,6 +244,7 @@ export function LearningFlow({
         console.log("[SuperLearn] Completing wallet step")
         completeStep("wallet")
         setTimeout(() => {
+          console.log("[SuperLearn] Moving to ai-intro step")
           setCurrentStep("ai-intro")
         }, 1500)
       }
