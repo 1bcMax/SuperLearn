@@ -20,32 +20,25 @@ const config = createConfig({
 // Create query client
 const queryClient = new QueryClient()
 
-// Privy configuration
-const privyAppId = process.env.NEXT_PUBLIC_PRIVY_APP_ID || "cmeep9fyr01myjx0cmvbug65n"
-
-// Log the app ID for debugging (remove in production)
-if (typeof window !== 'undefined') {
-  console.log('[Privy] App ID:', privyAppId ? 'Set' : 'Missing')
-}
-
 export function Providers({ children }: { children: React.ReactNode }) {
+  // Using user's app ID from env
+  const privyAppId = process.env.NEXT_PUBLIC_PRIVY_APP_ID || "cmeep9fyr01myjx0cmvbug65n"
+  
+  console.log('[Privy] Initializing with App ID:', privyAppId)
+
   return (
-    <>
+    <div>
       <ExtensionHandler />
       <PrivyProvider
         appId={privyAppId}
         config={{
-          // Appearance configuration
+          // Appearance
           appearance: {
             theme: 'light',
             accentColor: '#676FFF',
-            logo: 'https://i.imgur.com/JscDmDe.png',
           },
-          // Login methods
-          loginMethods: ['email', 'wallet', 'google'],
-          // Chain configuration
-          defaultChain: sepolia,
-          supportedChains: [mainnet, sepolia],
+          // Login methods - simplified
+          loginMethods: ['email', 'wallet'],
           // Embedded wallets
           embeddedWallets: {
             createOnLogin: 'users-without-wallets',
@@ -58,7 +51,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
           </WagmiProvider>
         </QueryClientProvider>
       </PrivyProvider>
-    </>
+    </div>
   )
 }
 

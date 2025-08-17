@@ -66,13 +66,16 @@ const usePrivyAuth = () => {
   // Get the primary wallet (first embedded or external wallet)
   const primaryWallet = wallets[0]
   
-  console.log("[Privy] Auth state:", {
-    ready,
-    authenticated,
-    user: user?.email?.address || user?.google?.email,
-    walletCount: wallets.length,
-    primaryWallet: primaryWallet?.address
-  })
+  // Only log when there's a state change
+  useEffect(() => {
+    console.log("[Privy] Auth state:", {
+      ready,
+      authenticated,
+      user: user?.email?.address || user?.google?.email,
+      walletCount: wallets.length,
+      primaryWallet: primaryWallet?.address
+    })
+  }, [ready, authenticated, user, wallets.length, primaryWallet?.address])
     
   return {
     ready,
@@ -86,7 +89,22 @@ const usePrivyAuth = () => {
 
 // Privy Login Button Component
 const PrivyLoginButton = () => {
-  const { ready, authenticated, login } = usePrivyAuth()
+  const { ready, authenticated, user } = usePrivy()
+  const { wallets } = useWallets() 
+  const { login } = useLogin()
+  const [isLoading, setIsLoading] = useState(false)
+  
+  const handleLogin = async () => {
+    try {
+      setIsLoading(true)
+      console.log('[Privy] Starting login...')
+      await login()
+    } catch (error) {
+      console.error('[Privy] Login error:', error)
+    } finally {
+      setIsLoading(false)
+    }
+  }
   
   if (!ready) {
     return (
@@ -108,10 +126,15 @@ const PrivyLoginButton = () => {
   
   return (
     <Button 
-      onClick={login}
+      onClick={handleLogin}
+      disabled={isLoading}
       className="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white"
     >
-      <Wallet className="w-4 h-4 mr-2" />
+      {isLoading ? (
+        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+      ) : (
+        <Wallet className="w-4 h-4 mr-2" />
+      )}
       Connect with Email or Wallet
     </Button>
   )
@@ -433,35 +456,12 @@ export function LearningFlow({
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-pink-100 via-purple-50 via-blue-50 via-green-50 to-yellow-100 p-4 relative overflow-hidden">
-      <div className="absolute top-10 left-10 text-6xl animate-bounce">🦄</div>
-      <div className="absolute top-20 right-20 text-4xl animate-pulse">🌈</div>
-      <div className="absolute bottom-20 left-20 text-5xl animate-bounce" style={{ animationDelay: "1s" }}>
-        ⭐
-      </div>
-      <div className="absolute bottom-10 right-10 text-4xl animate-pulse" style={{ animationDelay: "0.5s" }}>
-        🎉
-      </div>
-      <div className="absolute top-1/2 left-5 text-3xl animate-bounce" style={{ animationDelay: "2s" }}>
-        🌟
-      </div>
-      <div className="absolute top-1/3 right-5 text-3xl animate-pulse" style={{ animationDelay: "1.5s" }}>
-        🎈
-      </div>
-
-      <div className="max-w-6xl mx-auto space-y-8 relative z-10">
+    <div className="w-full">
+      <div className="space-y-8">
         <div className="text-center space-y-4">
-          <div className="flex items-center justify-center gap-2">
-            <div className="w-8 h-8 bg-gradient-to-r from-pink-500 via-purple-500 to-blue-500 rounded-lg flex items-center justify-center shadow-lg">
-              <Brain className="w-5 h-5 text-white" />
-            </div>
-            <span className="font-heading font-bold text-xl bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-              SuperLearn
-            </span>
-          </div>
-          <h1 className="font-heading font-bold text-3xl bg-gradient-to-r from-pink-500 via-purple-500 to-blue-500 bg-clip-text text-transparent">
+          <h2 className="font-heading font-bold text-4xl bg-gradient-to-r from-pink-500 via-purple-500 to-blue-500 bg-clip-text text-transparent">
             🦄 Your Magical Crypto Journey 🌈
-          </h1>
+          </h2>
           <div className="w-full max-w-md mx-auto bg-white/50 rounded-full p-1 shadow-lg">
             <div
               className="h-3 bg-gradient-to-r from-pink-400 via-purple-400 via-blue-400 to-green-400 rounded-full transition-all duration-500 shadow-sm"
@@ -472,7 +472,7 @@ export function LearningFlow({
         </div>
 
         <div className="relative">
-          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
             {steps.map((step, index) => {
               const Icon = step.icon
               const isClickable = step.id === currentStep || completedSteps.has(step.id)
@@ -480,18 +480,18 @@ export function LearningFlow({
               return (
                 <div key={step.id} className="relative">
                   <Card
-                    className={`cursor-pointer transition-all duration-300 hover:shadow-xl transform hover:-translate-y-1 ${
+                    className={`cursor-pointer transition-all duration-300 hover:shadow-xl transform hover:-translate-y-1 h-full ${
                       step.status === "active"
                         ? "ring-4 ring-pink-300 shadow-2xl bg-gradient-to-br from-pink-50 to-purple-50"
                         : step.status === "completed"
                           ? "bg-gradient-to-br from-green-100 to-emerald-100 border-green-300 shadow-lg"
                           : "opacity-70 bg-white/80"
-                    } ${isClickable ? "hover:scale-110" : "cursor-not-allowed"} backdrop-blur-sm border-2`}
+                    } ${isClickable ? "hover:scale-105" : "cursor-not-allowed"} backdrop-blur-sm border-2`}
                     onClick={() => isClickable && openStepModal(step.id)}
                   >
-                    <CardContent className="p-4 text-center space-y-3">
+                    <CardContent className="p-4 sm:p-6 text-center space-y-3">
                       <div
-                        className={`w-12 h-12 mx-auto rounded-full flex items-center justify-center shadow-lg ${
+                        className={`w-12 h-12 sm:w-14 sm:h-14 mx-auto rounded-full flex items-center justify-center shadow-lg ${
                           step.status === "active"
                             ? "bg-gradient-to-r from-pink-500 to-purple-500 text-white animate-pulse"
                             : step.status === "completed"
@@ -506,8 +506,8 @@ export function LearningFlow({
                         )}
                       </div>
                       <div>
-                        <h3 className="font-semibold text-sm text-purple-800">{step.title}</h3>
-                        <p className="text-xs text-purple-600">{step.description}</p>
+                        <h3 className="font-semibold text-sm sm:text-base text-purple-800">{step.title}</h3>
+                        <p className="text-xs sm:text-sm text-purple-600">{step.description}</p>
                       </div>
                       {step.status === "active" && (
                         <Badge className="text-xs bg-gradient-to-r from-pink-500 to-purple-500 text-white border-0 shadow-md">
@@ -524,13 +524,7 @@ export function LearningFlow({
 
                   {index < steps.length - 1 && (
                     <div className="hidden lg:block absolute top-1/2 -right-3 transform -translate-y-1/2 z-10">
-                      <ArrowRight className="w-6 h-6 text-purple-400 drop-shadow-lg" />
-                    </div>
-                  )}
-
-                  {index < steps.length - 1 && (
-                    <div className="lg:hidden flex justify-center mt-2">
-                      <ArrowDown className="w-6 h-6 text-purple-400 drop-shadow-lg" />
+                      <ArrowRight className="w-5 h-5 text-purple-400 drop-shadow-lg" />
                     </div>
                   )}
                 </div>
